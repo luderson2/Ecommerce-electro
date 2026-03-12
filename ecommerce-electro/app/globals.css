@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Palette E-Commerce Électroménager */
+  --color-primary: #1a2e5a;         /* Navy blue */
+  --color-primary-dark: #0f1c3a;
+  --color-primary-light: #2d4a8a;
+  --color-accent: #f47421;          /* Orange */
+  --color-accent-dark: #d45f10;
+  --color-accent-light: #ff8c3a;
+
+  --color-background: #ffffff;
+  --color-surface: #f4f5f7;         /* Gris clair cards */
+  --color-border: #e2e4e9;
+  --color-muted: #6b7280;
+  --color-foreground: #111827;
+
+  /* Shadcn CSS variables */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 210 20% 97%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 57% 23%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 20% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 25 90% 55%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 57% 23%;
+  --radius: 0.5rem;
+
+  --font-sans: var(--font-geist-sans);
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  }
+}
