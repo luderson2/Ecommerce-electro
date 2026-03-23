@@ -38,7 +38,7 @@ export default function ProductCard({ produit }: { produit: ProduitCarte }) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
             <span className="text-4xl mb-1">📦</span>
             <span className="text-xs">Pas d'image</span>
           </div>
@@ -61,7 +61,7 @@ export default function ProductCard({ produit }: { produit: ProduitCarte }) {
 
       {/* Contenu */}
       <div className="p-4 flex flex-col flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-0.5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
           {produit.brand}
         </p>
 
@@ -86,7 +86,7 @@ export default function ProductCard({ produit }: { produit: ProduitCarte }) {
         {/* CTA */}
         <div className="mt-3">
           {epuise ? (
-            <div className="w-full py-2 rounded-md text-sm font-semibold text-center bg-surface text-muted cursor-not-allowed border border-border">
+            <div className="w-full py-2 rounded-md text-sm font-semibold text-center bg-surface text-muted-foreground cursor-not-allowed border border-border">
               Indisponible
             </div>
           ) : (

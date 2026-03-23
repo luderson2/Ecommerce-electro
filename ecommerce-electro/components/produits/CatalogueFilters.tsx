@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 
 interface Categorie {
   id: string;
@@ -26,6 +26,7 @@ interface Props {
 export default function CatalogueFilters({ categories, marques, filtresActifs }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const updateParam = useCallback(
     (key: string, value: string | null) => {
@@ -35,7 +36,9 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
       } else {
         params.set(key, value);
       }
-      router.push(`/catalogue?${params.toString()}`);
+      startTransition(() => {
+        router.push(`/catalogue?${params.toString()}`, { scroll: false });
+      });
     },
     [router, searchParams]
   );
@@ -47,7 +50,9 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
     params.delete("prix_min");
     params.delete("prix_max");
     params.delete("en_stock");
-    router.push(`/catalogue?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/catalogue?${params.toString()}`, { scroll: false });
+    });
   };
 
   const hasFilters = !!(
@@ -59,11 +64,11 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
   );
 
   return (
-    <div className="bg-white rounded-lg border border-border p-5 space-y-5">
+    <div className={`bg-white rounded-lg border border-border p-5 space-y-5 transition-opacity ${isPending ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">Filtres</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filtres</h2>
         {hasFilters && (
           <button
             onClick={resetFilters}
@@ -96,7 +101,7 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
       {/* Catégories */}
       {categories.length > 0 && (
         <div className="border-t border-border pt-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Catégorie
           </h3>
           <ul className="space-y-0.5">
@@ -138,7 +143,7 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
       {/* Marques */}
       {marques.length > 0 && (
         <div className="border-t border-border pt-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
             Marque
           </h3>
           <ul className="space-y-2">
@@ -165,12 +170,12 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
 
       {/* Prix */}
       <div className="border-t border-border pt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Prix (CAD)
         </h3>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-xs select-none">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs select-none">
               $
             </span>
             <input
@@ -182,9 +187,9 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
               className="w-full pl-6 pr-2 py-1.5 border border-border rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-          <span className="text-muted text-sm shrink-0">–</span>
+          <span className="text-muted-foreground text-sm shrink-0">–</span>
           <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-xs select-none">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs select-none">
               $
             </span>
             <input

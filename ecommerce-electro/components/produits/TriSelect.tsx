@@ -24,7 +24,7 @@ export default function TriSelect({ tri }: { tri: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="tri" className="text-xs text-muted font-medium whitespace-nowrap">
+      <label htmlFor="tri" className="text-xs text-muted-foreground font-medium whitespace-nowrap">
         Trier par
       </label>
       <select

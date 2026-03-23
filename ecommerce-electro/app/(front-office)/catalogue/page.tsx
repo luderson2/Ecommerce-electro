@@ -1,85 +1,65 @@
-import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import ProductCard, { type ProduitCarte } from "@/components/produits/ProductCard";
+import { Suspense } from "react";
 import CatalogueFilters from "@/components/produits/CatalogueFilters";
+import FiltresMobile from "@/components/produits/FiltresMobile";
+import ProductCard, { type ProduitCarte } from "@/components/produits/ProductCard";
 import TriSelect from "@/components/produits/TriSelect";
 
-type SearchParams = Promise<{
+interface SearchParams {
   categorie?: string;
   marque?: string;
   prix_min?: string;
   prix_max?: string;
   en_stock?: string;
   tri?: string;
-}>;
+}
 
-export const metadata = {
-  title: "Catalogue",
-  description:
-    "Parcourez notre catalogue d'électroménagers : réfrigérateurs, laveuses, cuisinières et plus. Livraison au Québec.",
-};
-
-export default async function CataloguePage({ searchParams }: { searchParams: SearchParams }) {
-  const params = await searchParams;
+async function getCatalogueData(params: SearchParams) {
   const supabase = await createClient();
 
-  const categorieSlug = params.categorie;
-  const marque = params.marque;
-  const prixMin = params.prix_min ? parseFloat(params.prix_min) : undefined;
-  const prixMax = params.prix_max ? parseFloat(params.prix_max) : undefined;
-  const enStock = params.en_stock === "1";
-  const tri = params.tri ?? "recents";
+  // Catégories pour les filtres
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("id, name, slug")
+    .order("name");
 
-  // ── Données sidebar (catégories + marques) ────────────────────────────────
-  const [categoriesResult, brandsResult] = await Promise.all([
-    supabase.from("categories").select("id, name, slug").order("name"),
-    supabase.from("products").select("brand").eq("is_active", true),
-  ]);
+  // Marques distinctes
+  const { data: marqueRows } = await supabase
+    .from("products")
+    .select("brand")
+    .eq("is_active", true);
 
-  const categories = categoriesResult.data ?? [];
-  const marques = [
-    ...new Set(
-      (brandsResult.data ?? []).map((p: { brand: string }) => p.brand)
-    ),
-  ].sort() as string[];
+  const marques = [...new Set((marqueRows ?? []).map((r) => r.brand))].sort();
 
-  // ── Filtre catégorie via product_categories ───────────────────────────────
-  let idsCategorie: string[] | null = null;
-  if (categorieSlug) {
-    const { data: cat } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("slug", categorieSlug)
-      .single();
-
-    if (cat) {
-      const { data: liens } = await supabase
-        .from("product_categories")
-        .select("product_id")
-        .eq("category_id", cat.id);
-      idsCategorie = (liens ?? []).map((l: { product_id: string }) => l.product_id);
-    }
-  }
-
-  // ── Requête produits ──────────────────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
+  // Produits avec filtres
+  let query = supabase
     .from("products")
     .select("id, name, slug, price, brand, stock, product_images(url, sort_order)")
     .eq("is_active", true);
 
-  if (enStock) query = query.gt("stock", 0);
-  if (prixMin !== undefined) query = query.gte("price", prixMin);
-  if (prixMax !== undefined) query = query.lte("price", prixMax);
-  if (marque) query = query.eq("brand", marque);
-  if (idsCategorie !== null) {
-    query =
-      idsCategorie.length > 0
-        ? query.in("id", idsCategorie)
-        : query.in("id", ["___vide___"]);
+  if (params.categorie) {
+    const { data: cat } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("slug", params.categorie)
+      .single();
+    if (cat) {
+      const { data: pcRows } = await supabase
+        .from("product_categories")
+        .select("product_id")
+        .eq("category_id", cat.id);
+      const ids = (pcRows ?? []).map((r) => r.product_id);
+      // Si la catégorie existe mais est vide, forcer un résultat vide
+      query = ids.length > 0 ? query.in("id", ids) : query.in("id", ["00000000-0000-0000-0000-000000000000"]);
+    }
   }
 
-  switch (tri) {
+  if (params.marque) query = query.eq("brand", params.marque);
+  if (params.prix_min) query = query.gte("price", parseFloat(params.prix_min));
+  if (params.prix_max) query = query.lte("price", parseFloat(params.prix_max));
+  if (params.en_stock === "1") query = query.gt("stock", 0);
+
+  switch (params.tri) {
     case "prix_asc":
       query = query.order("price", { ascending: true });
       break;
@@ -90,85 +70,85 @@ export default async function CataloguePage({ searchParams }: { searchParams: Se
       query = query.order("created_at", { ascending: false });
   }
 
-  const { data: products, error } = (await query) as {
-    data: ProduitCarte[] | null;
-    error: { message: string } | null;
+  const { data: produits } = await query;
+
+  return {
+    produits: (produits ?? []) as ProduitCarte[],
+    categories: categories ?? [],
+    marques,
+  };
+}
+
+export default async function CataloguePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const { produits, categories, marques } = await getCatalogueData(params);
+
+  const filtresActifs = {
+    categorie: params.categorie,
+    marque: params.marque,
+    prix_min: params.prix_min,
+    prix_max: params.prix_max,
+    en_stock: params.en_stock === "1",
   };
 
-  const nbResultats = products?.length ?? 0;
-
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
+      {/* En-tête */}
+      <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Catalogue</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {produits.length} produit{produits.length !== 1 ? "s" : ""}
+          </p>
+        </div>
 
-      {/* Titre page */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">
-          {categorieSlug
-            ? (categories.find((c) => c.slug === categorieSlug)?.name ?? "Catalogue")
-            : "Catalogue"}
-        </h1>
-        <p className="text-sm text-muted mt-1">
-          Électroménagers livrés partout au Québec
-        </p>
+        {/* Bouton filtres mobile */}
+        <div className="md:hidden">
+          <Suspense>
+            <FiltresMobile
+              categories={categories}
+              marques={marques}
+              filtresActifs={filtresActifs}
+            />
+          </Suspense>
+        </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-
-        {/* ── Sidebar filtres ───────────────────────────────────────────── */}
-        <aside className="w-full lg:w-64 shrink-0">
+      <div className="flex gap-6 items-start">
+        {/* Sidebar filtres desktop */}
+        <aside className="hidden md:block w-56 lg:w-60 xl:w-64 shrink-0 sticky top-24">
           <Suspense>
             <CatalogueFilters
               categories={categories}
               marques={marques}
-              filtresActifs={{
-                categorie: categorieSlug,
-                marque,
-                prix_min: params.prix_min,
-                prix_max: params.prix_max,
-                en_stock: enStock,
-              }}
+              filtresActifs={filtresActifs}
             />
           </Suspense>
         </aside>
 
-        {/* ── Contenu principal ─────────────────────────────────────────── */}
+        {/* Grille produits */}
         <div className="flex-1 min-w-0">
-
-          {/* Barre résultats + tri */}
-          <div className="flex items-center justify-between mb-5 pb-4 border-b border-border">
-            <p className="text-sm text-muted">
-              <span className="font-semibold text-foreground tabular-nums">{nbResultats}</span>{" "}
-              produit{nbResultats !== 1 ? "s" : ""}
-              {marque && (
-                <span className="ml-1">
-                  — <span className="font-medium text-foreground">{marque}</span>
-                </span>
-              )}
-            </p>
+          {/* Barre tri */}
+          <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+            <span className="text-sm text-muted-foreground">
+              {produits.length} résultat{produits.length !== 1 ? "s" : ""}
+            </span>
             <Suspense>
-              <TriSelect tri={tri} />
+              <TriSelect tri={params.tri ?? "recents"} />
             </Suspense>
           </div>
 
-          {/* Erreur Supabase */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm mb-5">
-              Erreur lors du chargement : {error.message}
-            </div>
-          )}
-
-          {/* Grille ou état vide */}
-          {nbResultats === 0 && !error ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <span className="text-5xl mb-4">🔍</span>
-              <p className="text-lg font-semibold text-foreground">Aucun produit trouvé</p>
-              <p className="text-sm text-muted mt-1 max-w-xs">
-                Essayez de modifier ou de réinitialiser vos filtres pour voir plus de résultats.
-              </p>
+          {produits.length === 0 ? (
+            <div className="text-center py-16 bg-surface rounded-lg border border-border">
+              <p className="text-muted-foreground font-medium">Aucun produit ne correspond à vos critères.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {products?.map((produit) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {produits.map((produit) => (
                 <ProductCard key={produit.id} produit={produit} />
               ))}
             </div>

@@ -4,63 +4,76 @@
 Plateforme B2C complète pour la vente, gestion de livraison et service après-vente d'un magasin d'électroménagers québécois.
 
 ## Stack Technologique
-- **Frontend** : Next.js 14 + TypeScript
-- **UI** : Shadcn/ui + Tailwind CSS (style retail, inspiré Best Buy / Corbeil Électroménagers)
-- **Backend/DB** : Supabase (PostgreSQL + RLS + Auth)
-- **Paiements** : Stripe
+- **Frontend** : Next.js 16 + TypeScript
+- **UI** : Shadcn/ui (new-york) + Tailwind v4 + Lucide React
+- **Backend/DB** : Supabase (PostgreSQL + RLS + Auth SSR)
+- **Paiements** : Stripe (`2026-02-25.clover`)
 - **Déploiement** : Vercel
 - **Validation** : Zod
 - **Emails** : Resend
 
+## Palette Design
+- Navy blue primaire : `#1a2e5a` → `oklch(0.28 0.09 258)` → classes `bg-primary`, `text-primary`
+- Orange accent : `#f47421` → `oklch(0.66 0.19 42)` → classes `bg-accent`, `text-accent`
+- Gris surface : `#f4f5f7` → `oklch(0.97 0.002 247)` → classe `bg-surface`
+- ⚠️ Toujours utiliser `text-muted-foreground` (jamais `text-muted` qui est quasi-blanc)
+
 ## Architecture des Routes
 
-### Front-Office (Client)
-- `/` → Accueil
-- `/catalogue` → Liste des produits
-- `/catalogue/[slug]` → Fiche produit
-- `/categories/[slug]` → Produits par catégorie
-- `/packs` → Liste des packs
-- `/packs/[slug]` → Détail d'un pack
-- `/comparateur` → Comparateur de produits (2-3 produits)
-- `/recherche` → Résultats de recherche
+### Front-Office (public)
+| Route | État | Notes |
+|---|---|---|
+| `/` | ✅ Supabase SSR | Produits récents, catégories, packs |
+| `/catalogue` | ✅ Supabase SSR | Filtres URL params, sidebar responsive |
+| `/catalogue/[slug]` | ✅ Supabase SSR | Images, catégories, produits similaires |
+| `/packs` | ✅ Supabase SSR | Total calculé depuis pack_products |
+| `/packs/[id]` | ✅ Supabase SSR | Param = id (packs sans slug en BD) |
+| `/comparateur` | ✅ Supabase client | Champs disponibles : marque, prix, stock, description |
+| `/categories/[slug]` | 🔲 À faire | |
+| `/recherche` | 🔲 À faire | |
 
 ### Compte Client (🔒 Auth requise)
-- `/compte/panier` → Panier + paiement Stripe
-- `/compte/wishlist` → Liste de souhaits
-- `/compte/commandes` → Historique des commandes
-- `/compte/commandes/[id]` → Détail d'une commande + statut livraison
-- `/compte/sav` → Formulaire SAV + historique demandes
-- `/compte/profil` → Modifier ses informations
+| Route | État |
+|---|---|
+| `/compte/panier` | 🔲 À faire |
+| `/compte/wishlist` | 🔲 À faire |
+| `/compte/commandes` | 🔲 À faire |
+| `/compte/commandes/[id]` | 🔲 À faire |
+| `/compte/sav` | 🔲 À faire |
+| `/compte/profil` | 🔲 À faire |
 
 ### Auth
-- `/connexion`
-- `/inscription`
+| Route | État |
+|---|---|
+| `/connexion` | ✅ Server Action |
+| `/inscription` | 🔲 À faire |
 
 ### Back-Office (🔒 Admin/Employé)
-- `/admin` → Dashboard (stats, alertes stock)
-- `/admin/produits` → Gérer les produits
-- `/admin/produits/nouveau` → Créer un produit
-- `/admin/produits/[id]` → Modifier un produit
-- `/admin/categories` → Gérer les catégories
-- `/admin/commandes` → Toutes les commandes
-- `/admin/commandes/[id]` → Détail + changer statut
-- `/admin/livraisons` → Statuts + dates prévues
-- `/admin/packs` → Gérer les packs
-- `/admin/rabais` → Gérer les rabais
-- `/admin/sav` → Demandes SAV
-- `/admin/clients` → Liste des clients
+| Route | État |
+|---|---|
+| `/admin` | ✅ Dashboard |
+| `/admin/produits` | ✅ Liste + CRUD |
+| `/admin/commandes` | ✅ Liste + détail |
+| `/admin/categories` | 🔲 Page existante (à vérifier) |
+| `/admin/clients` | 🔲 Page existante (à vérifier) |
+| `/admin/livraisons` | 🔲 Page existante (à vérifier) |
+| `/admin/packs` | 🔲 Page existante (à vérifier) |
+| `/admin/rabais` | 🔲 Page existante (à vérifier) |
+| `/admin/sav` | 🔲 Page existante (à vérifier) |
 
-## Base de Données — 15 Tables Supabase
+## Base de Données — Supabase (tables actives)
 
 ### Utilisateurs
-- `profiles` — id, full_name, phone, address, role (client/admin/employee)
+- `profiles` — id, full_name, phone, address, role (`client`/`admin`/`employee`)
 
 ### Produits
 - `products` — id, name, slug, description, price, brand, stock, is_active
+  - ⚠️ Pas de `category_id` direct → liaison via `product_categories`
+  - ⚠️ Pas de `specs`, `rating`, `reviewCount`, `originalPrice`
 - `categories` — id, name, slug, description
 - `product_categories` — product_id, category_id (jonction many-to-many)
 - `product_images` — id, product_id, url, sort_order
-- `product_accessories` — product_id, accessory_id (self-join cross-selling)
+- `product_accessories` — product_id, accessory_id
 
 ### Commandes
 - `orders` — id, user_id, status, total_amount, stripe_payment_id
@@ -77,38 +90,60 @@ Plateforme B2C complète pour la vente, gestion de livraison et service après-v
 - `stock_alerts` — id, product_id, email, notified_at
 
 ### Packs & Rabais
-- `packs` — id, name, description, price, is_active
-- `pack_products` — pack_id, product_id (jonction)
-- `discounts` — id, product_id, pack_id, discount_type, value, starts_at, ends_at
+- `packs` — id, name, description, price, is_active ⚠️ **pas de slug**
+- `pack_products` — pack_id, product_id
+- `discounts` — id, product_id, pack_id, discount_type, value, starts_at, ends_at, is_active
 
-## Rôles Utilisateurs
-- `client` → accès Front-Office uniquement
-- `admin` → accès complet Back-Office
-- `employee` → accès livraisons + SAV
-
-## Structure des Dossiers
+## Structure des Dossiers (état nettoyé)
 ```
-src/
+ecommerce-electro/
 ├── app/
+│   ├── layout.tsx                    ← Root layout UNIQUEMENT (html, body)
+│   ├── globals.css                   ← Palette + Tailwind v4 (seul CSS valide)
 │   ├── (front-office)/
+│   │   ├── layout.tsx                ← Navbar + main + Footer (sans html/body)
+│   │   ├── page.tsx
+│   │   ├── catalogue/
+│   │   ├── packs/
+│   │   ├── comparateur/
+│   │   └── categories/
 │   ├── (auth)/
+│   ├── (client)/compte/
 │   └── admin/
 ├── components/
-│   ├── ui/          ← Shadcn
-│   ├── produits/
-│   ├── panier/
-│   ├── admin/
-│   └── layout/
+│   ├── layout/                       ← Navbar.tsx, Footer.tsx (ElectroMétropolitain)
+│   ├── produits/                     ← ProductCard, CatalogueFilters, TriSelect, FiltresMobile
+│   ├── home/                         ← Hero, Categories, FeaturedProducts, TrustBar
+│   ├── packs/                        ← PackCard
+│   ├── comparateur/                  ← Comparateur
+│   ├── admin/                        ← AdminSidebar, ProduitForm, StatCard
+│   └── ui/                           ← Shadcn (ne pas modifier)
 ├── lib/
-│   ├── supabase.ts
+│   ├── supabase/client.ts            ← Browser client
+│   ├── supabase/server.ts            ← Server (RSC)
+│   ├── supabase/middleware.ts        ← Session refresh
 │   ├── stripe.ts
-│   └── validations/
+│   ├── utils.ts                      ← cn(), formatPrix(), slugify(), calculerEconomie()
+│   └── validations/                  ← auth.ts, product.ts, order.ts
 └── types/
-    └── index.ts
+    ├── index.ts
+    └── database.ts
 ```
 
-## Design
-- Style retail professionnel (pas SaaS)
-- Inspiré de Best Buy et Corbeil Électroménagers
-- Palette : navy blue + blanc + gris + orange accent
-- Référence visuelle : maquette Figma AI générée pour la page catalogue
+## Points d'attention
+- `middleware.ts` supprimé — routes `/compte` et `/admin` non protégées → **à recréer**
+- Filtre catégorie catalogue : passer par `product_categories` (junction), pas par `category_id`
+- Lien vers un pack : utiliser `id` comme paramètre URL (pas de slug sur `packs`)
+- CSS : `app/globals.css` est le seul globals.css valide du projet
+
+## Compte admin de test
+- Email : `admin@electrometropolitain.ca`
+- Mot de passe : `Admin1234!`
+
+## Prochaines étapes
+1. Recréer `middleware.ts` (protection /compte + /admin)
+2. Page `/inscription` + gestion session complète
+3. Panier (state management côté client)
+4. Checkout Stripe
+5. Pages compte client (profil, commandes, SAV, wishlist)
+6. Compléter / vérifier les pages admin restantes
