@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Plus } from "lucide-react";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrix } from "@/lib/utils";
+import ProduitsFilters from "./ProduitsFilters";
 
 type ProduitLigne = {
   id: string;
@@ -15,15 +17,55 @@ type ProduitLigne = {
   product_images: { url: string; sort_order: number }[];
 };
 
-export default async function AdminProduitsPage() {
+type SearchParams = Promise<{
+  q?: string;
+  marque?: string;
+  statut?: string;
+  stock?: string;
+}>;
+
+export default async function AdminProduitsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
-  const { data: products, error } = (await supabase
+
+  // ── Marques pour le filtre ────────────────────────────────────────────────
+  const { data: brandsData } = await supabase.from("products").select("brand");
+  const marques = [...new Set((brandsData ?? []).map((p: { brand: string }) => p.brand))].sort() as string[];
+
+  // ── Requête produits avec filtres ─────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query: any = supabase
     .from("products")
     .select("id, name, slug, price, brand, stock, is_active, product_images(url, sort_order)")
-    .order("created_at", { ascending: false })) as unknown as {
+    .order("created_at", { ascending: false });
+
+  if (params.q) {
+    query = query.ilike("name", `%${params.q}%`);
+  }
+  if (params.marque) {
+    query = query.eq("brand", params.marque);
+  }
+  if (params.statut === "actif") {
+    query = query.eq("is_active", true);
+  } else if (params.statut === "inactif") {
+    query = query.eq("is_active", false);
+  }
+  if (params.stock === "epuise") {
+    query = query.eq("stock", 0);
+  } else if (params.stock === "faible") {
+    query = query.gt("stock", 0).lte("stock", 5);
+  }
+
+  const { data: products, error } = (await query) as unknown as {
     data: ProduitLigne[] | null;
     error: { message: string } | null;
   };
+
+  const nb = products?.length ?? 0;
 
   return (
     <div>
@@ -32,7 +74,13 @@ export default async function AdminProduitsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Produits</h1>
           <p className="text-sm text-muted mt-0.5">
-            {products?.length ?? 0} produit{(products?.length ?? 0) !== 1 ? "s" : ""} au total
+            <span className="font-semibold text-foreground">{nb}</span>{" "}
+            produit{nb !== 1 ? "s" : ""}
+            {params.q && (
+              <span className="ml-1">
+                — résultats pour <span className="font-medium text-foreground">«{params.q}»</span>
+              </span>
+            )}
           </p>
         </div>
         <Link
@@ -43,6 +91,19 @@ export default async function AdminProduitsPage() {
           Nouveau produit
         </Link>
       </div>
+
+      {/* Filtres */}
+      <Suspense>
+        <ProduitsFilters
+          marques={marques}
+          filtresActifs={{
+            q: params.q,
+            marque: params.marque,
+            statut: params.statut,
+            stock: params.stock,
+          }}
+        />
+      </Suspense>
 
       {/* Erreur Supabase */}
       {error && (
@@ -81,10 +142,12 @@ export default async function AdminProduitsPage() {
             {!products?.length ? (
               <tr>
                 <td colSpan={7} className="px-4 py-16 text-center text-muted text-sm">
-                  Aucun produit pour le moment.{" "}
-                  <Link href="/admin/produits/nouveau" className="text-primary underline">
-                    Créer le premier produit
-                  </Link>
+                  Aucun produit trouvé.{" "}
+                  {!params.q && !params.marque && !params.statut && !params.stock && (
+                    <Link href="/admin/produits/nouveau" className="text-primary underline">
+                      Créer le premier produit
+                    </Link>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -92,7 +155,7 @@ export default async function AdminProduitsPage() {
                 const imageUrl = product.product_images
                   ?.slice()
                   .sort((a, b) => a.sort_order - b.sort_order)[0]?.url;
-                const stockFaible = product.stock <= 5;
+                const stockFaible = product.stock > 0 && product.stock <= 5;
 
                 return (
                   <tr
@@ -132,14 +195,10 @@ export default async function AdminProduitsPage() {
 
                     {/* Stock */}
                     <td className="px-4 py-3">
-                      <span
-                        className={`font-medium tabular-nums ${
-                          stockFaible ? "text-red-600" : "text-foreground"
-                        }`}
-                      >
+                      <span className={`font-medium tabular-nums ${product.stock === 0 || stockFaible ? "text-red-600" : "text-foreground"}`}>
                         {product.stock}
                       </span>
-                      {stockFaible && product.stock > 0 && (
+                      {stockFaible && (
                         <span className="ml-1.5 text-xs text-red-500">Stock faible</span>
                       )}
                       {product.stock === 0 && (
@@ -149,18 +208,10 @@ export default async function AdminProduitsPage() {
 
                     {/* Statut */}
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          product.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block w-1.5 h-1.5 rounded-full ${
-                            product.is_active ? "bg-green-500" : "bg-gray-400"
-                          }`}
-                        />
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        product.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      }`}>
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${product.is_active ? "bg-green-500" : "bg-gray-400"}`} />
                         {product.is_active ? "Actif" : "Inactif"}
                       </span>
                     </td>
