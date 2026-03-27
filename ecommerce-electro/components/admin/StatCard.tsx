@@ -43,10 +43,10 @@ export default function StatCard({
         <Icon size={20} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
         <p className="text-2xl font-bold text-foreground mt-0.5 leading-tight tabular-nums">{value}</p>
         {sous_label && (
-          <p className="text-xs text-muted mt-1">{sous_label}</p>
+          <p className="text-xs text-muted-foreground mt-1">{sous_label}</p>
         )}
       </div>
     </div>

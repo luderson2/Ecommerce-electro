@@ -57,7 +57,7 @@ export default async function HomePage() {
                     Magasiner <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10" asChild>
+                <Button size="lg" variant="outline" className="bg-transparent border-white/40 text-white hover:bg-white/10 hover:text-white" asChild>
                   <Link href="/packs">Voir les packs</Link>
                 </Button>
               </div>

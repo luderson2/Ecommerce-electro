@@ -52,7 +52,7 @@ export default function ProduitEditForm({ produit }: Props) {
             required
             defaultValue={produit.name}
             onChange={handleNomChange}
-            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
           />
         </div>
 
@@ -60,7 +60,7 @@ export default function ProduitEditForm({ produit }: Props) {
         <div>
           <label htmlFor="slug" className="block text-sm font-medium text-foreground mb-1.5">
             Slug (URL)
-            <span className="text-muted text-xs font-normal ml-2">— généré automatiquement</span>
+            <span className="text-muted-foreground text-xs font-normal ml-2">— généré automatiquement</span>
           </label>
           <input
             id="slug"
@@ -68,7 +68,7 @@ export default function ProduitEditForm({ produit }: Props) {
             required
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono transition-colors"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-surface text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono transition-colors"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function ProduitEditForm({ produit }: Props) {
             name="description"
             rows={4}
             defaultValue={produit.description ?? ""}
-            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-colors"
+            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-colors"
           />
         </div>
 
@@ -93,7 +93,7 @@ export default function ProduitEditForm({ produit }: Props) {
               Prix (CAD) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm select-none">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">$</span>
               <input
                 id="price"
                 name="price"
@@ -142,7 +142,7 @@ export default function ProduitEditForm({ produit }: Props) {
         <div className="flex items-center justify-between p-4 bg-surface rounded-lg border border-border">
           <div>
             <p className="text-sm font-medium text-foreground">Produit actif</p>
-            <p className="text-xs text-muted mt-0.5">Visible sur le catalogue public</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Visible sur le catalogue public</p>
           </div>
           <button
             type="button"

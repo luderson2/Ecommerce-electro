@@ -10,7 +10,7 @@ export default function ConnexionPage() {
             <span className="text-white font-bold text-lg">E</span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Connexion</h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-muted-foreground">
             Accédez à votre espace ElectroMétropolitain
           </p>
         </div>

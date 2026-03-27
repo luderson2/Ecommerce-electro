@@ -31,7 +31,7 @@ export default async function AdminProduitsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Produits</h1>
-          <p className="text-sm text-muted mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {products?.length ?? 0} produit{(products?.length ?? 0) !== 1 ? "s" : ""} au total
           </p>
         </div>
@@ -56,22 +56,22 @@ export default async function AdminProduitsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider w-16">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-16">
                 Image
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Nom
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Marque
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Prix
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Stock
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Statut
               </th>
               <th className="px-4 py-3 w-24" />
@@ -80,7 +80,7 @@ export default async function AdminProduitsPage() {
           <tbody>
             {!products?.length ? (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center text-muted text-sm">
+                <td colSpan={7} className="px-4 py-16 text-center text-muted-foreground text-sm">
                   Aucun produit pour le moment.{" "}
                   <Link href="/admin/produits/nouveau" className="text-primary underline">
                     Créer le premier produit
@@ -111,7 +111,7 @@ export default async function AdminProduitsPage() {
                             className="object-cover"
                           />
                         ) : (
-                          <span className="text-muted text-xs">—</span>
+                          <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </div>
                     </td>
@@ -119,7 +119,7 @@ export default async function AdminProduitsPage() {
                     {/* Nom */}
                     <td className="px-4 py-3">
                       <p className="font-medium text-foreground leading-tight">{product.name}</p>
-                      <p className="text-muted text-xs mt-0.5 font-mono">{product.slug}</p>
+                      <p className="text-muted-foreground text-xs mt-0.5 font-mono">{product.slug}</p>
                     </td>
 
                     {/* Marque */}

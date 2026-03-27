@@ -25,7 +25,7 @@ export default function ConnexionForm() {
           autoComplete="email"
           required
           placeholder="admin@electrometropolitain.ca"
-          className="w-full px-3 py-2.5 border border-border rounded-md text-sm bg-white placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+          className="w-full px-3 py-2.5 border border-border rounded-md text-sm bg-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
         />
       </div>
 
@@ -40,7 +40,7 @@ export default function ConnexionForm() {
           autoComplete="current-password"
           required
           placeholder="••••••••"
-          className="w-full px-3 py-2.5 border border-border rounded-md text-sm bg-white placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+          className="w-full px-3 py-2.5 border border-border rounded-md text-sm bg-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
         />
       </div>
 

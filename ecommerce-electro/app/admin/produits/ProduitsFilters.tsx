@@ -52,11 +52,11 @@ export default function ProduitsFilters({ marques, filtresActifs }: Props) {
 
         {/* Recherche */}
         <div className="flex-1 min-w-48">
-          <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
             Recherche
           </label>
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Nom du produit…"
@@ -72,7 +72,7 @@ export default function ProduitsFilters({ marques, filtresActifs }: Props) {
 
         {/* Marque */}
         <div className="min-w-36">
-          <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
             Marque
           </label>
           <select
@@ -89,7 +89,7 @@ export default function ProduitsFilters({ marques, filtresActifs }: Props) {
 
         {/* Statut */}
         <div>
-          <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
             Statut
           </label>
           <div className="flex gap-1">
@@ -111,7 +111,7 @@ export default function ProduitsFilters({ marques, filtresActifs }: Props) {
 
         {/* Stock */}
         <div>
-          <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
             Stock
           </label>
           <div className="flex gap-1">

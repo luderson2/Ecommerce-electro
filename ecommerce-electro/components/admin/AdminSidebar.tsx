@@ -22,7 +22,7 @@ export default function AdminSidebar() {
   return (
     <aside className="w-64 shrink-0 border-r bg-white">
       <div className="p-4">
-        <p className="mb-4 text-xs font-semibold uppercase text-muted tracking-wider">
+        <p className="mb-4 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
           Administration
         </p>
         <nav className="space-y-1">
