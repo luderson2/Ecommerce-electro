@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { packSchema } from "@/lib/validations/pack";
+import { slugify } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -32,7 +33,7 @@ export async function creerPack(
 
   const { data: pack, error } = await supabase
     .from("packs")
-    .insert(parsed.data)
+    .insert({ ...parsed.data, slug: slugify(parsed.data.name), description: parsed.data.description ?? null })
     .select("id")
     .single();
 
@@ -65,7 +66,7 @@ export async function modifierPack(
 
   const { error } = await supabase
     .from("packs")
-    .update(parsed.data)
+    .update({ ...parsed.data, slug: slugify(parsed.data.name), description: parsed.data.description ?? null })
     .eq("id", id);
 
   if (error) return { error: error.message };

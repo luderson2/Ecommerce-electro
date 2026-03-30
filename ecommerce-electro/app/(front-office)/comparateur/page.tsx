@@ -50,13 +50,17 @@ export default function ComparateurPage() {
   }, []);
 
   useEffect(() => {
-    if (compareIds.length === 0) { setProduits([]); return; }
+    if (compareIds.length === 0) {
+      setProduits([]);
+      return;
+    }
     const supabase = createClient();
     supabase
       .from("products")
       .select("id, name, slug, brand, price, stock, description, product_images(url, sort_order)")
       .in("id", compareIds)
-      .then(({ data }) => setProduits((data ?? []) as ProduitComparateur[]));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then(({ data }) => setProduits((data ?? []) as any));
   }, [compareIds]);
 
   const retirer = (id: string) => setCompareIds((ids) => ids.filter((i) => i !== id));

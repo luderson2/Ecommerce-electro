@@ -40,7 +40,7 @@ export default function ProductCard({ produit }: { produit: ProduitCarte }) {
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
             <span className="text-4xl mb-1">📦</span>
-            <span className="text-xs">Pas d'image</span>
+            <span className="text-xs">Pas d&apos;image</span>
           </div>
         )}
 

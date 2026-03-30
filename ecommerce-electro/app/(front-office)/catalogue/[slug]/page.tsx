@@ -104,7 +104,7 @@ export default async function ProduitDetailPage({
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
                 <span className="text-5xl mb-2">📦</span>
-                <span className="text-sm">Pas d'image</span>
+                <span className="text-sm">Pas d&apos;image</span>
               </div>
             )}
             {epuise && (

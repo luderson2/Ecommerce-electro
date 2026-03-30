@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
 import StatCard from "@/components/admin/StatCard";
 import { Package, ShoppingCart, DollarSign, Clock } from "lucide-react";
@@ -136,7 +138,7 @@ export default async function AdminDashboardPage() {
 
         {!dernieresCommandes || dernieresCommandes.length === 0 ? (
           <p className="px-5 py-8 text-sm text-muted-foreground text-center">
-            Aucune commande pour l'instant.
+            Aucune commande pour l&apos;instant.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -236,7 +238,7 @@ export default async function AdminDashboardPage() {
       {/* Graphique CA mensuel */}
       <div className="mt-6 bg-white rounded-lg border border-border">
         <div className="px-5 py-4 border-b border-border">
-          <h2 className="font-semibold text-foreground">Chiffre d'affaires — 6 derniers mois</h2>
+          <h2 className="font-semibold text-foreground">Chiffre d&apos;affaires — 6 derniers mois</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Commandes non annulées uniquement</p>
         </div>
         <div className="px-5 py-4">

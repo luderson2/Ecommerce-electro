@@ -75,7 +75,7 @@ export default function Comparateur() {
     <div className="py-8">
       {/* Sélection produits */}
       <div className="mb-8">
-        <h2 className="text-lg font-bold mb-3">Choisissez jusqu'à 4 produits</h2>
+        <h2 className="text-lg font-bold mb-3">Choisissez jusqu&apos;à 4 produits</h2>
         <div className="flex gap-3 flex-wrap">
           {produitsDisponibles.map(p => (
             <button

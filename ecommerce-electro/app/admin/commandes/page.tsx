@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Package } from "lucide-react";
@@ -75,7 +77,7 @@ export default async function AdminCommandesPage({
     .order("created_at", { ascending: false });
 
   if (filtreStatut) {
-    query = query.eq("status", filtreStatut);
+    query = query.eq("status", filtreStatut as OrderStatus);
   }
 
   const { data: commandes, error } = await query as unknown as {

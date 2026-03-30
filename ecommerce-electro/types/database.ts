@@ -1,6 +1,3 @@
-// Types auto-générés par Supabase CLI (placeholder — remplacer par `npx supabase gen types typescript`)
-// Pour générer : npx supabase gen types typescript --project-id <votre-project-id> > types/database.ts
-
 export type Database = {
   public: {
     Tables: {
@@ -15,6 +12,7 @@ export type Database = {
         };
         Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], "created_at">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
       };
       products: {
         Row: {
@@ -34,6 +32,7 @@ export type Database = {
           "id" | "created_at" | "updated_at"
         >;
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
+        Relationships: [];
       };
       categories: {
         Row: {
@@ -45,12 +44,21 @@ export type Database = {
         };
         Insert: Omit<Database["public"]["Tables"]["categories"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["categories"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       orders: {
         Row: {
           id: string;
           user_id: string;
-          status: string;
+          status: "en_attente" | "payee" | "en_preparation" | "livraison" | "livree" | "annulee";
           total_amount: number;
           stripe_payment_id: string | null;
           created_at: string;
@@ -60,6 +68,15 @@ export type Database = {
           "id" | "created_at"
         >;
         Update: Partial<Database["public"]["Tables"]["orders"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       order_items: {
         Row: {
@@ -71,18 +88,43 @@ export type Database = {
         };
         Insert: Omit<Database["public"]["Tables"]["order_items"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["order_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       deliveries: {
         Row: {
           id: string;
           order_id: string;
-          status: string;
+          status: "planifiee" | "en_transit" | "livree" | "echec";
           scheduled_date: string | null;
           delivered_at: string | null;
           notes: string | null;
         };
         Insert: Omit<Database["public"]["Tables"]["deliveries"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["deliveries"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       service_requests: {
         Row: {
@@ -91,7 +133,7 @@ export type Database = {
           order_id: string | null;
           subject: string;
           description: string;
-          status: string;
+          status: "ouvert" | "en_cours" | "resolu" | "ferme";
           created_at: string;
         };
         Insert: Omit<
@@ -101,6 +143,22 @@ export type Database = {
         Update: Partial<
           Database["public"]["Tables"]["service_requests"]["Insert"]
         >;
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "service_requests_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       wishlist: {
         Row: {
@@ -111,6 +169,22 @@ export type Database = {
         };
         Insert: Omit<Database["public"]["Tables"]["wishlist"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["wishlist"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "wishlist_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       stock_alerts: {
         Row: {
@@ -121,6 +195,15 @@ export type Database = {
         };
         Insert: Omit<Database["public"]["Tables"]["stock_alerts"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["stock_alerts"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "stock_alerts_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       packs: {
         Row: {
@@ -133,16 +216,49 @@ export type Database = {
         };
         Insert: Omit<Database["public"]["Tables"]["packs"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["packs"]["Insert"]>;
+        Relationships: [];
       };
       pack_products: {
         Row: { pack_id: string; product_id: string };
         Insert: Database["public"]["Tables"]["pack_products"]["Row"];
         Update: Partial<Database["public"]["Tables"]["pack_products"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "pack_products_pack_id_fkey";
+            columns: ["pack_id"];
+            isOneToOne: false;
+            referencedRelation: "packs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pack_products_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       product_categories: {
         Row: { product_id: string; category_id: string };
         Insert: Database["public"]["Tables"]["product_categories"]["Row"];
         Update: Partial<Database["public"]["Tables"]["product_categories"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_categories_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       product_images: {
         Row: {
@@ -153,11 +269,36 @@ export type Database = {
         };
         Insert: Omit<Database["public"]["Tables"]["product_images"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["product_images"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       product_accessories: {
         Row: { product_id: string; accessory_id: string };
         Insert: Database["public"]["Tables"]["product_accessories"]["Row"];
         Update: Partial<Database["public"]["Tables"]["product_accessories"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "product_accessories_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "product_accessories_accessory_id_fkey";
+            columns: ["accessory_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       discounts: {
         Row: {
@@ -168,10 +309,36 @@ export type Database = {
           value: number;
           starts_at: string | null;
           ends_at: string | null;
+          is_active: boolean;
         };
         Insert: Omit<Database["public"]["Tables"]["discounts"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["discounts"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "discounts_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "discounts_pack_id_fkey";
+            columns: ["pack_id"];
+            isOneToOne: false;
+            referencedRelation: "packs";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
+    Views: { [_ in never]: never };
+    Functions: {
+      get_user_email: {
+        Args: { user_id: string };
+        Returns: string;
+      };
+    };
+    Enums: { [_ in never]: never };
+    CompositeTypes: { [_ in never]: never };
   };
 };

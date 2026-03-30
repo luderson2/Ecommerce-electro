@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { modifierProduit, supprimerProduit } from "@/lib/actions/produits";
 import { slugify } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
@@ -170,12 +171,12 @@ export default function ProduitEditForm({ produit }: Props) {
           >
             {isPending ? "Enregistrement…" : "Enregistrer les modifications"}
           </button>
-          <a
+          <Link
             href="/admin/produits"
             className="px-6 py-2 rounded-md text-sm font-medium text-foreground border border-border hover:bg-surface transition-colors"
           >
             Annuler
-          </a>
+          </Link>
         </div>
       </form>
 

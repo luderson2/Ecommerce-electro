@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { X, Plus } from "lucide-react";
-import { creerPack } from "@/lib/actions/packs";
-import { modifierPack } from "@/lib/actions/packs";
+import { creerPack, modifierPack } from "@/lib/actions/packs";
 
 type Produit = { id: string; name: string; brand: string };
 
@@ -223,12 +223,12 @@ export default function PackForm({
             ? "Créer le pack"
             : "Enregistrer les modifications"}
         </button>
-        <a
+        <Link
           href="/admin/packs"
           className="px-6 py-2 rounded-md text-sm font-medium text-foreground border border-border hover:bg-surface transition-colors"
         >
           Annuler
-        </a>
+        </Link>
       </div>
     </form>
   );

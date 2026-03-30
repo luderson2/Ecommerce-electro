@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import Link from "next/link";
 import { creerProduit } from "@/lib/actions/produits";
 import { slugify } from "@/lib/utils";
 
@@ -162,12 +163,12 @@ export default function ProduitForm() {
         >
           {isPending ? "Enregistrement…" : "Créer le produit"}
         </button>
-        <a
+        <Link
           href="/admin/produits"
           className="px-6 py-2 rounded-md text-sm font-medium text-foreground border border-border hover:bg-surface transition-colors"
         >
           Annuler
-        </a>
+        </Link>
       </div>
     </form>
   );
