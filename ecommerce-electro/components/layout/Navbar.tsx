@@ -2,35 +2,63 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, ShoppingCart, Heart, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { 
+  Menu, X, ShoppingCart, Heart, User, Search, 
+  LogOut, Package, Settings, Loader2 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-
-const navLinks = [
-  { href: "/", label: "Accueil" },
-  { href: "/catalogue", label: "Catalogue" },
-  { href: "/packs", label: "Packs" },
-  { href: "/comparateur", label: "Comparer" },
-];
+import { useAuth } from "@/contexts/auth-context";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const { user, logout, isLoading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const navLinks = [
+    { href: "/", label: "Accueil" },
+    { href: "/catalogue", label: "Catalogue" },
+    { href: "/packs", label: "Packs" },
+    { href: "/comparateur", label: "Comparer" },
+  ];
+
+  const handleLogout = async () => {
+    await logout();
+    setMobileMenuOpen(false);
+    router.push("/");
+    router.refresh();
+  };
+
+  
+  const displayName = user?.profile 
+    ? `${user.profile.first_name} ${user.profile.last_name}` 
+    : user?.email?.split("@")[0] || "Utilisateur";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-primary text-white shadow-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <Link href="/" className="font-bold text-xl tracking-tight shrink-0">
-          ElectroMétropolitain
+        
+        
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-primary font-bold text-sm">
+            EA
+          </div>
+          <span className="font-bold text-xl tracking-tight hidden sm:block">
+            ÉlectroMétropolitain
+          </span>
         </Link>
 
-        {/* Nav desktop */}
+        
         <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
@@ -43,7 +71,9 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Actions */}
+
+
+       
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" asChild>
             <Link href="/compte/wishlist">
@@ -55,61 +85,115 @@ export default function Navbar() {
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" asChild>
             <Link href="/compte/panier">
               <ShoppingCart className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center border-2 border-primary">
+                0
+              </span>
               <span className="sr-only">Panier</span>
             </Link>
           </Button>
 
+         
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
                 <User className="h-5 w-5" />
-                <span className="sr-only">Mon compte</span>
+                {user && (
+                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-green-400 border border-primary" />
+                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link href="/connexion">Connexion</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/inscription">Inscription</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/compte/profil">Mon profil</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/compte/commandes">Mes commandes</Link>
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+              {isLoading ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : user ? (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{displayName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/compte/profil" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" /> Mon profil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/compte/commandes" className="cursor-pointer">
+                      <Package className="mr-2 h-4 w-4" /> Mes commandes
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" /> Se déconnecter
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/connexion" className="cursor-pointer font-semibold">Connexion</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/inscription" className="cursor-pointer">Inscription</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Burger mobile */}
+        
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden text-white hover:bg-white/10"
-            onClick={() => setOpen(!open)}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            <span className="sr-only">Menu</span>
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </div>
 
-      {/* Menu mobile */}
-      {open && (
-        <nav className="md:hidden border-t border-white/20 bg-primary">
-          <div className="flex flex-col px-4 py-3 gap-1">
+      
+      {searchOpen && (
+        <div className="border-t border-white/10 px-4 py-3 lg:hidden bg-primary-dark">
+          <Input
+            type="search"
+            placeholder="Rechercher un produit..."
+            className="bg-white/10 border-0 text-white placeholder:text-white/60"
+          />
+        </div>
+      )}
+
+     
+      {mobileMenuOpen && (
+        <nav className="md:hidden border-t border-white/10 bg-primary shadow-xl">
+          <div className="flex flex-col px-4 py-4 gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="py-2 text-sm font-medium text-white/80 hover:text-white transition-colors"
-                onClick={() => setOpen(false)}
+                className="py-2 text-base font-medium text-white/80 hover:text-white"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
+            {!user && (
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/10">
+                <Button variant="outline" className="text-primary border-white bg-white hover:bg-white/90" asChild>
+                  <Link href="/connexion" onClick={() => setMobileMenuOpen(false)}>Connexion</Link>
+                </Button>
+                <Button className="bg-white/20 text-white hover:bg-white/30 border-0" asChild>
+                  <Link href="/inscription" onClick={() => setMobileMenuOpen(false)}>S'inscrire</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </nav>
       )}

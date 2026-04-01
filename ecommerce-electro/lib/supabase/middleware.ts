@@ -26,27 +26,31 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
+ const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
 
-  // Protéger les routes client (compte)
-  if (!user && path.startsWith("/compte")) {
+
+  const protectedPaths = ["/compte", "/admin", "/panier", "/favoris", "/checkout"];
+  const isProtectedPath = protectedPaths.some((p) => path.startsWith(p));
+
+  if (isProtectedPath && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/connexion";
+    url.searchParams.set("next", path); 
     return NextResponse.redirect(url);
   }
 
-  // Protéger les routes admin
-  if (path.startsWith("/admin")) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/connexion";
-      return NextResponse.redirect(url);
-    }
-    // Vérification du rôle admin se fait dans les Server Components
+
+  const authPaths = ["/connexion", "/inscription"];
+  const isAuthPath = authPaths.some((p) => path === p);
+
+  if (isAuthPath && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/compte"; 
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
