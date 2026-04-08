@@ -18,10 +18,12 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
+import { useCart } from "@/contexts/cart-context";
 
 export default function Navbar() {
   const router = useRouter();
   const { user, logout, isLoading } = useAuth();
+  const { cartCount, wishlistCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -39,7 +41,6 @@ export default function Navbar() {
     router.refresh();
   };
 
-  
   const displayName = user?.profile 
     ? `${user.profile.first_name} ${user.profile.last_name}` 
     : user?.email?.split("@")[0] || "Utilisateur";
@@ -48,7 +49,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-primary text-white shadow-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         
-        
+       
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-primary font-bold text-sm">
             EA
@@ -58,7 +59,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        
+       
         <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
@@ -71,28 +72,36 @@ export default function Navbar() {
           ))}
         </nav>
 
-
-
-       
+        
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" asChild>
+          
+          {/* Favoris Button with Counter */}
+          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" asChild>
             <Link href="/compte/wishlist">
               <Heart className="h-5 w-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white border-2 border-primary shadow-sm">
+                  {wishlistCount}
+                </span>
+              )}
               <span className="sr-only">Favoris</span>
             </Link>
           </Button>
 
+          
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" asChild>
             <Link href="/compte/panier">
               <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center border-2 border-primary">
-                0
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white border-2 border-primary shadow-sm">
+                  {cartCount}
+                </span>
+              )}
               <span className="sr-only">Panier</span>
             </Link>
           </Button>
 
-         
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
@@ -147,7 +156,7 @@ export default function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-        
+          {/* Burger mobile */}
           <Button
             variant="ghost"
             size="icon"
@@ -159,18 +168,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      
-      {searchOpen && (
-        <div className="border-t border-white/10 px-4 py-3 lg:hidden bg-primary-dark">
-          <Input
-            type="search"
-            placeholder="Rechercher un produit..."
-            className="bg-white/10 border-0 text-white placeholder:text-white/60"
-          />
-        </div>
-      )}
-
-     
+      {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <nav className="md:hidden border-t border-white/10 bg-primary shadow-xl">
           <div className="flex flex-col px-4 py-4 gap-2">
@@ -178,7 +176,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="py-2 text-base font-medium text-white/80 hover:text-white"
+                className="py-2 text-base font-medium text-white/80 hover:text-white transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
@@ -190,7 +188,7 @@ export default function Navbar() {
                   <Link href="/connexion" onClick={() => setMobileMenuOpen(false)}>Connexion</Link>
                 </Button>
                 <Button className="bg-white/20 text-white hover:bg-white/30 border-0" asChild>
-                  <Link href="/inscription" onClick={() => setMobileMenuOpen(false)}>S'inscrire</Link>
+                  <Link href="/inscription" onClick={() => setMobileMenuOpen(false)}>S&apos;inscrire</Link>
                 </Button>
               </div>
             )}

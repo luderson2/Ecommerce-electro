@@ -5,12 +5,10 @@ export default function ClientLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* <Navbar /> */}
-      <div className="container mx-auto flex flex-1 gap-8 px-4 py-8">
-        {/* <AccountSidebar /> */}
-        <main className="flex-1">{children}</main>
-      </div>
-      {/* <Footer /> */}
+      {/* On enlève le "container" et le "flex-1" d'ici pour laisser les pages respirer */}
+      <main className="flex-1 w-full">
+        {children}
+      </main>
     </div>
   );
 }
