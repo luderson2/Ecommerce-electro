@@ -22,7 +22,7 @@ export default function CartPage() {
 
   
   const subtotal = cartTotal
-  const taxRate = 0.14975 // Québec: TPS 5% + TVQ 9.975%
+  const taxRate = 0.14975 
   const taxes = subtotal * taxRate
   const shipping = (subtotal >= 500 || subtotal === 0) ? 0 : 25
   const total = subtotal + taxes + shipping
@@ -55,7 +55,7 @@ export default function CartPage() {
     }
   }
 
-  // --- ÉTATS CHARGEMENT / NON CONNECTÉ ---
+ 
   if (!user && !isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -111,7 +111,7 @@ export default function CartPage() {
         ) : (
           <>
             <div className="grid lg:grid-cols-3 gap-8 mb-12">
-              {/* LISTE DES ARTICLES */}
+             
               <div className="lg:col-span-2 space-y-4">
                 {cartItems.map((item) => (
                   <Card key={item.id} className="overflow-hidden border-border/50">
@@ -169,7 +169,7 @@ export default function CartPage() {
                 ))}
               </div>
 
-              {/* RÉSUMÉ COMMANDE */}
+             
               <div className="lg:col-span-1">
                 <Card className="sticky top-24 shadow-md border-primary/10">
                   <CardHeader><CardTitle>Résumé de la commande</CardTitle></CardHeader>
