@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -114,7 +114,7 @@ export default async function AdminCommandeDetailPage({
       </div>
 
       <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 320px" }}>
-        {/* ── Colonne principale ── */}
+        {/* â”€â”€ Colonne principale â”€â”€ */}
         <div className="space-y-6 min-w-0">
 
           {/* Articles commandés */}
@@ -256,7 +256,7 @@ export default async function AdminCommandeDetailPage({
 
         </div>
 
-        {/* ── Colonne latérale ── */}
+        {/* â”€â”€ Colonne latérale â”€â”€ */}
         <div className="space-y-6">
 
           {/* Changer le statut */}
@@ -279,7 +279,7 @@ export default async function AdminCommandeDetailPage({
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Nom complet</p>
                 <p className="font-medium text-foreground">
-                  {[commande.profiles?.first_name, commande.profiles?.last_name].filter(Boolean).join(" ") || "—"}
+                  {[commande.profiles?.first_name, commande.profiles?.last_name].filter(Boolean).join(" ") || "-"}
                 </p>
               </div>
               <div>
@@ -292,13 +292,13 @@ export default async function AdminCommandeDetailPage({
                     {email}
                   </a>
                 ) : (
-                  <p className="text-muted-foreground italic">—</p>
+                  <p className="text-muted-foreground italic">-</p>
                 )}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Téléphone</p>
                 <p className="font-medium text-foreground">
-                  {commande.profiles?.phone ?? "—"}
+                  {commande.profiles?.phone ?? "-"}
                 </p>
               </div>
               <div>
@@ -312,7 +312,7 @@ export default async function AdminCommandeDetailPage({
                         commande.shipping_address_province,
                         commande.shipping_address_postal_code,
                       ].filter(Boolean).join(', ')
-                    : "—"}
+                    : "-"}
                 </p>
               </div>
             </div>

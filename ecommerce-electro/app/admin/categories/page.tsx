@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Plus, Pencil } from "lucide-react";
@@ -95,7 +95,7 @@ export default async function AdminCategoriesPage() {
                       {cat.description ? (
                         <span className="truncate block">{cat.description}</span>
                       ) : (
-                        <span className="italic">—</span>
+                        <span className="italic">-</span>
                       )}
                     </td>
 

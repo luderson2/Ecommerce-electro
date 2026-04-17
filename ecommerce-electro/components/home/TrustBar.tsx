@@ -1,4 +1,4 @@
-import { Truck, ShieldCheck, Phone, RotateCcw } from "lucide-react"
+﻿import { Truck, ShieldCheck, Phone, RotateCcw } from "lucide-react"
 export default function TrustBar() {
 const items = [
   { icone: <Truck size={52}/>, titre: "Livraison gratuite", desc: "Dès 500$ d'achat" },

@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -77,7 +77,7 @@ export default async function AdminSavDetailPage({
       </div>
 
       <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 300px" }}>
-        {/* ── Colonne principale ── */}
+        {/* â”€â”€ Colonne principale â”€â”€ */}
         <div className="space-y-6 min-w-0">
 
           {/* Description */}
@@ -113,7 +113,7 @@ export default async function AdminSavDetailPage({
           )}
         </div>
 
-        {/* ── Colonne latérale ── */}
+        {/* â”€â”€ Colonne latérale â”€â”€ */}
         <div className="space-y-6">
 
           {/* Changer le statut */}
@@ -136,7 +136,7 @@ export default async function AdminSavDetailPage({
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Nom complet</p>
                 <p className="font-medium text-foreground">
-                  {[demande.profiles?.first_name, demande.profiles?.last_name].filter(Boolean).join(" ") || "—"}
+                  {[demande.profiles?.first_name, demande.profiles?.last_name].filter(Boolean).join(" ") || "-"}
                 </p>
               </div>
               <div>
@@ -149,13 +149,13 @@ export default async function AdminSavDetailPage({
                     {email}
                   </a>
                 ) : (
-                  <p className="text-muted-foreground italic">—</p>
+                  <p className="text-muted-foreground italic">-</p>
                 )}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Téléphone</p>
                 <p className="font-medium text-foreground">
-                  {demande.profiles?.phone ?? "—"}
+                  {demande.profiles?.phone ?? "-"}
                 </p>
               </div>
             </div>

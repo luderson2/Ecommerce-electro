@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { User, Package, Heart, Headphones, LogOut, ChevronRight, Loader2, CheckCircle2, AlertCircle, ShoppingBag } from 'lucide-react'
@@ -16,7 +17,6 @@ import { useAuth } from '@/contexts/auth-context'
 import { useCart } from '@/contexts/cart-context'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrix } from '@/lib/utils'
-import { StatusBadge } from '@/components/status-badge'
 import { profileSchema } from '@/lib/validations/profile'
 import type { Database } from '@/types/database'
 
@@ -143,8 +143,8 @@ export default function AccountPage() {
       if (error) throw error
       await refreshUser()
       setMessage({ type: 'success', text: 'Profil mis à jour avec succès !' })
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Erreur lors de la mise à jour.' })
+    } catch (error: unknown) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Erreur lors de la mise a jour.' })
     } finally {
       setIsSaving(false)
     }
@@ -152,13 +152,18 @@ export default function AccountPage() {
 
   const handleChangePassword = async () => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user?.email!, {
+      if (!user?.email) {
+      setMessage({ type: 'error', text: 'Adresse courriel introuvable.' })
+      return
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${window.location.origin}/compte/profil/reset-password`,
       })
       if (error) throw error
       setMessage({ type: 'success', text: 'Lien de réinitialisation envoyé par courriel.' })
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message })
+    } catch (error: unknown) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Erreur lors de la demande.' })
     }
   }
 
@@ -343,9 +348,9 @@ export default function AccountPage() {
                         <div className="flex items-center gap-2">
                           
                           <div className="hidden sm:flex -space-x-2 mr-4">
-                            {order.order_items?.slice(0, 3).map((item: any, idx: number) => (
-                              <div key={idx} className="h-8 w-8 rounded-full border bg-white p-1 overflow-hidden">
-                                <img src={item.product_image || '/placeholder.svg'} alt="" className="h-full w-full object-contain" />
+                            {order.order_items?.slice(0, 3).map((item, idx) => (
+                              <div key={idx} className="relative h-8 w-8 rounded-full border bg-white p-1 overflow-hidden">
+                                <Image src={item.product_image || '/placeholder.svg'} alt="" fill className="object-contain" />
                               </div>
                             ))}
                             {order.order_items?.length > 3 && (
@@ -374,7 +379,7 @@ export default function AccountPage() {
                 ) : (
                   wishlistItems.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 p-4 border rounded-xl">
-                      <img src={item.product_image!} alt={item.product_name} className="h-16 w-16 object-contain" />
+                      <Image src={item.product_image!} alt={item.product_name} width={64} height={64} className="object-contain" />
                       <div className="flex-1">
                         <p className="font-semibold">{item.product_name}</p>
                         <p className="text-sm text-primary">{formatPrix(item.product_price)}</p>

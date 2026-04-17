@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -76,7 +76,7 @@ export default async function AdminLivraisonDetailPage({
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-foreground">
-              Livraison — commande{" "}
+              Livraison - commande{" "}
               {livraison.orders
                 ? `#${livraison.orders.id.slice(0, 8).toUpperCase()}`
                 : "inconnue"}
@@ -92,7 +92,7 @@ export default async function AdminLivraisonDetailPage({
       </div>
 
       <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 300px" }}>
-        {/* ── Colonne principale ── */}
+        {/* â”€â”€ Colonne principale â”€â”€ */}
         <div className="space-y-6 min-w-0">
 
           {/* Détails livraison */}
@@ -116,7 +116,7 @@ export default async function AdminLivraisonDetailPage({
                   <p className="font-medium text-foreground">
                     {livraison.delivered_at
                       ? formatDateLong(livraison.delivered_at, true)
-                      : <span className="italic text-muted-foreground">—</span>}
+                      : <span className="italic text-muted-foreground">-</span>}
                   </p>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default async function AdminLivraisonDetailPage({
           )}
         </div>
 
-        {/* ── Colonne latérale ── */}
+        {/* â”€â”€ Colonne latérale â”€â”€ */}
         <div className="space-y-6">
 
           {/* Modifier la livraison */}
@@ -189,7 +189,7 @@ export default async function AdminLivraisonDetailPage({
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Nom complet</p>
                 <p className="font-medium text-foreground">
-                  {[livraison.orders?.profiles?.first_name, livraison.orders?.profiles?.last_name].filter(Boolean).join(" ") || "—"}
+                  {[livraison.orders?.profiles?.first_name, livraison.orders?.profiles?.last_name].filter(Boolean).join(" ") || "-"}
                 </p>
               </div>
               <div>
@@ -199,13 +199,13 @@ export default async function AdminLivraisonDetailPage({
                     {email}
                   </a>
                 ) : (
-                  <p className="text-muted-foreground italic">—</p>
+                  <p className="text-muted-foreground italic">-</p>
                 )}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Téléphone</p>
                 <p className="font-medium text-foreground">
-                  {livraison.orders?.profiles?.phone ?? "—"}
+                  {livraison.orders?.profiles?.phone ?? "-"}
                 </p>
               </div>
             </div>

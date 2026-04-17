@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, Package, Home, ShoppingBag, Loader2, XCircle } from 'lucide-react'
+import { CheckCircle, Package, Home, Loader2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -25,8 +25,10 @@ function CheckoutSuccessContent() {
   useEffect(() => {
    
     if (!sessionId || !orderId) {
-      setStatus('error')
-      setErrorMessage('Informations de commande manquantes dans l\'URL.')
+      queueMicrotask(() => {
+        setStatus('error')
+        setErrorMessage('Informations de commande manquantes dans l\'URL.')
+      })
       return
     }
 
@@ -50,10 +52,10 @@ function CheckoutSuccessContent() {
           setStatus('error')
           setErrorMessage('Le paiement n\'a pas encore été validé par Stripe.')
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Erreur confirmation:', err)
         setStatus('error')
-        setErrorMessage(err.message || 'Erreur lors de la validation finale.')
+        setErrorMessage(err instanceof Error ? err.message : 'Erreur lors de la validation finale.')
       }
     }
 
@@ -110,13 +112,13 @@ function CheckoutSuccessContent() {
                   <Button asChild className="w-full py-6">
                     <Link href="/compte/commandes">
                       <Package className="h-4 w-4 mr-2" />
-                      Voir l'historique de mes commandes
+                      Voir l&apos;historique de mes commandes
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="w-full">
                     <Link href="/">
                       <Home className="h-4 w-4 mr-2" />
-                      Retour à l'accueil
+                      Retour à l&apos;accueil
                     </Link>
                   </Button>
                 </div>

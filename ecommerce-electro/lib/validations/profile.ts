@@ -1,4 +1,4 @@
-import { z } from 'zod'
+﻿import { z } from 'zod'
 
 export const profileSchema = z.object({
   first_name: z.string().min(1, 'Prénom requis'),

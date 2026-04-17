@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Menu, X, ShoppingCart, Heart, User, Search, 
-  LogOut, Package, Settings, Loader2 
+import {
+  Menu, X, ShoppingCart, Heart, User,
+  LogOut, Package, Loader2, Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ export default function Navbar() {
   const { user, logout, isLoading } = useAuth();
   const { cartCount, wishlistCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const navLinks = [
     { href: "/", label: "Accueil" },
@@ -39,6 +39,14 @@ export default function Navbar() {
     setMobileMenuOpen(false);
     router.push("/");
     router.refresh();
+  };
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    setMobileMenuOpen(false);
+    router.push(`/recherche?q=${encodeURIComponent(q)}`);
   };
 
   const displayName = user?.profile 
@@ -60,7 +68,7 @@ export default function Navbar() {
         </Link>
 
        
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-6" aria-label="Navigation principale">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -73,6 +81,19 @@ export default function Navbar() {
         </nav>
 
         
+        <form onSubmit={handleSearch} className="hidden lg:flex w-64 items-center gap-2" role="search">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Rechercher un appareil"
+              aria-label="Rechercher un électroménager"
+              className="h-9 border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/60 focus-visible:ring-white/30"
+            />
+          </div>
+        </form>
+
         <div className="flex items-center gap-1">
           
           {/* Favoris Button with Counter */}
@@ -84,7 +105,7 @@ export default function Navbar() {
                   {wishlistCount}
                 </span>
               )}
-              <span className="sr-only">Favoris</span>
+              <span className="sr-only">Voir les favoris</span>
             </Link>
           </Button>
 
@@ -97,14 +118,14 @@ export default function Navbar() {
                   {cartCount}
                 </span>
               )}
-              <span className="sr-only">Panier</span>
+              <span className="sr-only">Voir le panier</span>
             </Link>
           </Button>
 
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" aria-label="Ouvrir le menu du compte">
                 <User className="h-5 w-5" />
                 {user && (
                   <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-green-400 border border-primary" />
@@ -162,6 +183,9 @@ export default function Navbar() {
             size="icon"
             className="md:hidden text-white hover:bg-white/10"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
+            aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
@@ -170,8 +194,20 @@ export default function Navbar() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <nav className="md:hidden border-t border-white/10 bg-primary shadow-xl">
+        <nav id="mobile-navigation" className="md:hidden border-t border-white/10 bg-primary shadow-xl" aria-label="Navigation mobile">
           <div className="flex flex-col px-4 py-4 gap-2">
+            <form onSubmit={handleSearch} className="mb-3" role="search">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Rechercher"
+                  aria-label="Rechercher un électroménager"
+                  className="border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/60 focus-visible:ring-white/30"
+                />
+              </div>
+            </form>
             {navLinks.map((link) => (
               <Link
                 key={link.href}

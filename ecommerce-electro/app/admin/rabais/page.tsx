@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Plus, Pencil } from "lucide-react";
@@ -155,7 +155,7 @@ export default async function AdminRabaisPage({
             ) : (
               rabais.map((r) => {
                 const s = getStatut(r);
-                const nomCible = r.products?.name ?? r.packs?.name ?? "—";
+                const nomCible = r.products?.name ?? r.packs?.name ?? "-";
                 const typeCible = r.product_id ? "Produit" : "Pack";
 
                 return (

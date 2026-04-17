@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Plus, Pencil } from "lucide-react";
@@ -87,7 +87,7 @@ export default async function AdminPacksPage() {
                   ? pack.description.length > 60
                     ? pack.description.slice(0, 60) + "…"
                     : pack.description
-                  : "—";
+                  : "-";
 
                 return (
                   <tr key={pack.id} className="hover:bg-surface/60 transition-colors">

@@ -1,8 +1,8 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/server";
 import StatCard from "@/components/admin/StatCard";
-import { Package, ShoppingCart, DollarSign, Clock, AlertTriangle, Truck } from "lucide-react";
+import { Package, ShoppingCart, DollarSign, Clock, AlertTriangle } from "lucide-react";
 import { formatPrix } from "@/lib/utils";
 import Link from "next/link";
 import type { OrderStatus } from "@/types";
@@ -223,7 +223,7 @@ export default async function AdminDashboardPage() {
             <h2 className="font-semibold text-foreground">
               Stock bas
               <span className="ml-2 text-xs font-normal text-orange-600">
-                ({stockBas.length} produit{stockBas.length > 1 ? "s" : ""} ≤ {SEUIL_STOCK_BAS} unités)
+                ({stockBas.length} produit{stockBas.length > 1 ? "s" : ""} â‰¤ {SEUIL_STOCK_BAS} unités)
               </span>
             </h2>
             <Link
@@ -258,7 +258,7 @@ export default async function AdminDashboardPage() {
       {/* Graphique CA mensuel */}
       <div className="mt-6 bg-white rounded-lg border border-border">
         <div className="px-5 py-4 border-b border-border">
-          <h2 className="font-semibold text-foreground">Chiffre d&apos;affaires — 6 derniers mois</h2>
+          <h2 className="font-semibold text-foreground">Chiffre d&apos;affaires - 6 derniers mois</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Commandes non annulées uniquement</p>
         </div>
         <div className="px-5 py-4">

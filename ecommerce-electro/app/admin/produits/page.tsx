@@ -1,8 +1,8 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Plus, Pencil, AlertTriangle } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrix } from "@/lib/utils";
 
@@ -112,7 +112,7 @@ export default async function AdminProduitsPage() {
                             unoptimized={imageUrl.includes("placehold.co")}
                           />
                         ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
+                          <span className="text-muted-foreground text-xs">-</span>
                         )}
                       </div>
                     </td>

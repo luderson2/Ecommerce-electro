@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from "next/image";
 import Link from "next/link";
@@ -65,8 +65,8 @@ export default function ProductCard({
         price: produit.price,
         image: imageUrl || '',
       });
-    } catch (err: any) {
-      setCartError(err.message || 'Erreur lors de l\'ajout au panier');
+    } catch (err: unknown) {
+      setCartError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout au panier');
     } finally {
       setIsAddingToCart(false);
     }
@@ -143,6 +143,7 @@ export default function ProductCard({
             className={`h-8 w-8 rounded-full shadow-md ${inWishlist ? 'bg-primary text-white' : 'bg-white text-foreground'}`}
             onClick={handleWishlistToggle}
             disabled={isTogglingWishlist}
+            aria-label={inWishlist ? "Retirer des favoris" : "Ajouter aux favoris"}
           >
             {isTogglingWishlist ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -159,6 +160,7 @@ export default function ProductCard({
               e.preventDefault();
               onCompareToggle?.(produit.id);
             }}
+            aria-label={isInCompare ? "Retirer du comparateur" : "Ajouter au comparateur"}
           >
             <GitCompareArrows className="h-4 w-4" />
           </Button>

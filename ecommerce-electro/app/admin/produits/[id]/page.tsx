@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -83,17 +83,17 @@ export default async function EditProduitPage({
         <SupprimerProduitButton id={produit.id} nom={produit.name} />
       </div>
 
-      {/* 1 — Informations de base */}
+      {/* 1 - Informations de base */}
       <Section title="Informations générales">
         <ProduitForm produit={produit} />
       </Section>
 
-      {/* 2 — Images */}
+      {/* 2 - Images */}
       <Section title="Images">
         <ImageSection productId={produit.id} initialImages={images ?? []} />
       </Section>
 
-      {/* 3 — Catégories */}
+      {/* 3 - Catégories */}
       <Section title="Catégories">
         <CategoriesSection
           productId={produit.id}
@@ -102,12 +102,12 @@ export default async function EditProduitPage({
         />
       </Section>
 
-      {/* 4 — Specs techniques */}
+      {/* 4 - Specs techniques */}
       <Section title="Spécifications techniques">
         <SpecsSection productId={produit.id} initialSpecs={initialSpecs} />
       </Section>
 
-      {/* 5 — Accessoires */}
+      {/* 5 - Accessoires */}
       <Section title="Accessoires">
         <AccessoiresSection
           productId={produit.id}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
@@ -187,7 +187,7 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
               className="w-full pl-6 pr-2 py-1.5 border border-border rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-          <span className="text-muted-foreground text-sm shrink-0">–</span>
+          <span className="text-muted-foreground text-sm shrink-0">-</span>
           <div className="relative flex-1">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs select-none">
               $

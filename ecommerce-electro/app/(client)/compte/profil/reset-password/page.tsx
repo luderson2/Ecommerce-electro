@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -39,8 +39,8 @@ export default function ResetPasswordPage() {
       if (error) throw error
       setMessage({ type: 'success', text: 'Mot de passe mis à jour avec succès !' })
       setTimeout(() => router.push('/compte/profil'), 2000)
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Une erreur est survenue.' })
+    } catch (err: unknown) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Une erreur est survenue.' })
     } finally {
       setIsLoading(false)
     }

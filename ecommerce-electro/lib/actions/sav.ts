@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -112,11 +112,11 @@ export async function soumettreDemandeSAV(
               Suivre ma demande
             </a>
           </p>
-          <p style="color:#888;font-size:13px;margin-top:24px">ElectroShop · Service après-vente</p>
+          <p style="color:#888;font-size:13px;margin-top:24px">ÉlectroMétropolitain · Service après-vente</p>
         </div>
       `,
     }).catch(() => {
-      // Échec d'envoi non bloquant — la demande est quand même créée
+      // Échec d'envoi non bloquant - la demande est quand même créée
     });
   }
 

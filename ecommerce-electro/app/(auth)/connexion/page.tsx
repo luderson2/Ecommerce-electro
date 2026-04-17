@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 import ConnexionForm from "./ConnexionForm";
 
 export default function ConnexionPage() {

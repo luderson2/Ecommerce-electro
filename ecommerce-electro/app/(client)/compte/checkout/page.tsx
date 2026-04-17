@@ -1,9 +1,10 @@
-'use client'
+﻿'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { CreditCard, Truck, CheckCircle, MapPin, DollarSign, Lock, ShoppingBag, ArrowLeft } from 'lucide-react'
+import { Truck, CheckCircle, MapPin, DollarSign, Lock, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -18,7 +19,7 @@ import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
 import { createCheckoutSession, cancelPendingOrder, type DeliveryMode } from '@/lib/actions/stripe'
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuth()
@@ -43,13 +44,15 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (user?.profile && !addressInitialized.current) {
       addressInitialized.current = true
-      setAddress({
-        street: user.profile.address_street ?? '',
-        apartment: user.profile.address_apartment ?? '',
-        city: user.profile.address_city ?? '',
-        province: user.profile.address_province ?? 'Quebec',
-        postalCode: user.profile.address_postal_code ?? '',
-        country: user.profile.address_country ?? 'Canada',
+      queueMicrotask(() => {
+        setAddress({
+          street: user.profile?.address_street ?? '',
+          apartment: user.profile?.address_apartment ?? '',
+          city: user.profile?.address_city ?? '',
+          province: user.profile?.address_province ?? 'Quebec',
+          postalCode: user.profile?.address_postal_code ?? '',
+          country: user.profile?.address_country ?? 'Canada',
+        })
       })
     }
   }, [user])
@@ -92,18 +95,14 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
-      const origin = window.location.origin
       // On envoie le mode de livraison (pas le coût calculé côté client)
       // Les prix sont recalculés serveur-side depuis la DB
-      const safeCartItems = cartItems.map(({ product_id, product_name, product_image, quantity }) => ({
+      const safeCartItems = cartItems.map(({ product_id, quantity }) => ({
         product_id,
-        product_name,
-        product_image: product_image ?? null,
         quantity,
       }))
       const { url } = await createCheckoutSession(
         safeCartItems,
-        origin,
         selectedDelivery as DeliveryMode,
         tipAmount,
         {
@@ -116,8 +115,8 @@ export default function CheckoutPage() {
         }
       )
       window.location.href = url
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue lors de la creation de la session de paiement.')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la creation de la session de paiement.')
       setIsLoading(false)
     }
   }
@@ -339,7 +338,7 @@ export default function CheckoutPage() {
                       <div key={item.id} className="flex gap-3">
                         <div className="relative h-14 w-14 flex-shrink-0 rounded-md bg-secondary/50 overflow-hidden">
                           {item.product_image && (
-                            <img src={item.product_image} alt={item.product_name} className="h-full w-full object-contain p-1" />
+                            <Image src={item.product_image} alt={item.product_name} fill className="object-contain p-1" />
                           )}
                           <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
                             {item.quantity}
@@ -431,5 +430,21 @@ export default function CheckoutPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-16 text-center">
+          <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        </main>
+        <Footer />
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   )
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import { Plus, X, Save } from "lucide-react";
@@ -61,7 +61,7 @@ export default function SpecsSection({ productId, initialSpecs }: SpecsSectionPr
     setIsSaving(true);
     setError(null);
 
-    // Build JSONB object — skip lines with empty key
+    // Build JSONB object - skip lines with empty key
     const specsObj: Record<string, string> = {};
     for (const { cle, valeur } of specs) {
       if (cle.trim()) {
@@ -71,7 +71,7 @@ export default function SpecsSection({ productId, initialSpecs }: SpecsSectionPr
 
     const { error } = await supabase
       .from("products")
-      .update({ specs: specsObj } as any)
+      .update({ specs: specsObj })
       .eq("id", productId);
 
     if (error) {
@@ -180,7 +180,7 @@ export default function SpecsSection({ productId, initialSpecs }: SpecsSectionPr
             className="gap-1.5"
           >
             <Save className="h-3.5 w-3.5" />
-            {isSaving ? "Sauvegarde…" : saved ? "Sauvegardé ✓" : "Sauvegarder les specs"}
+            {isSaving ? "Sauvegarde…" : saved ? "Sauvegardé âœ“" : "Sauvegarder les specs"}
           </Button>
         )}
       </div>

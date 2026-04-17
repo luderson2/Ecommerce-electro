@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -10,8 +10,11 @@ import { type ProduitCarte } from "@/components/produits/ProductCard";
 import TriSelect from "@/components/produits/TriSelect";
 
 export const metadata: Metadata = {
-  title: "Catalogue",
+  title: "Catalogue électroménagers à Montréal",
   description: "Parcourez notre sélection complète d'électroménagers : réfrigérateurs, laveuses, cuisinières, lave-vaisselle et plus encore.",
+  alternates: {
+    canonical: "/catalogue",
+  },
 };
 
 interface SearchParams {

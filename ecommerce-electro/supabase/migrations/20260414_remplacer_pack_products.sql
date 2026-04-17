@@ -8,8 +8,18 @@ create or replace function remplacer_pack_products(
 returns void
 language plpgsql
 security definer
+set search_path = public
 as $$
 begin
+  if not exists (
+    select 1
+    from profiles
+    where id = auth.uid()
+      and role in ('admin', 'employee')
+  ) then
+    raise exception 'Acces non autorise';
+  end if;
+
   delete from pack_products where pack_id = p_pack_id;
 
   if array_length(p_product_ids, 1) > 0 then
@@ -18,3 +28,6 @@ begin
   end if;
 end;
 $$;
+
+revoke all on function public.remplacer_pack_products(uuid, uuid[]) from public, anon, authenticated;
+grant execute on function public.remplacer_pack_products(uuid, uuid[]) to authenticated;

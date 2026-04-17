@@ -1,37 +1,40 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Check, Package, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check, Package, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrix } from "@/lib/utils";
+import PackActions from "@/components/packs/PackActions";
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug: id } = await params;
+  const { slug } = await params;
   const supabase = await createClient();
 
   const { data: pack } = await supabase
     .from("packs")
     .select("name, description")
-    .eq("id", id)
+    .eq("slug", slug)
     .eq("is_active", true)
     .single();
 
   if (!pack) return { title: "Pack introuvable" };
 
   return {
-    title: `${pack.name} — Pack ElectroShop`,
-    description: pack.description ?? `Découvrez le pack ${pack.name} sur ElectroShop.`,
+    title: `${pack.name} - Pack électroménager`,
+    description: pack.description ?? `Découvrez le pack ${pack.name} chez ÉlectroMétropolitain.`,
+    alternates: {
+      canonical: `/packs/${slug}`,
+    },
     openGraph: {
-      title: `${pack.name} — Pack ElectroShop`,
+      title: `${pack.name} - Pack électroménager`,
       description: pack.description ?? `Découvrez le pack ${pack.name}.`,
     },
   };
@@ -43,18 +46,18 @@ export default async function PackDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   // Le paramètre "slug" contient l'id du pack (les packs n'ont pas de slug en BD)
-  const { slug: id } = await params;
+  const { slug } = await params;
   const supabase = await createClient();
 
   const { data: pack } = await supabase
     .from("packs")
     .select(`
-      id, name, description, price,
+      id, slug, name, description, price,
       pack_products(
         products(id, name, slug, price, brand, stock, product_images(url, sort_order))
       )
     `)
-    .eq("id", id)
+    .eq("slug", slug)
     .eq("is_active", true)
     .single();
 
@@ -70,6 +73,13 @@ export default async function PackDetailPage({
   const imageUrl = produits[0]?.product_images
     ?.slice()
     .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)[0]?.url;
+  const packActionProducts = produits.map((p: { id: string; name: string; price: number; stock: number; product_images: { url: string; sort_order: number }[] }) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    stock: p.stock,
+    image: [...(p.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? "",
+  }));
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -137,10 +147,7 @@ export default async function PackDetailPage({
                 </li>
               ))}
             </ul>
-            <Button className="w-full bg-accent hover:bg-accent/90 text-white" size="lg">
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Ajouter le pack au panier
-            </Button>
+            <PackActions products={packActionProducts} />
           </div>
         </div>
       </div>

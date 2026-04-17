@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const packSchema = z.object({
   name: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),

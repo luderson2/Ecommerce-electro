@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
@@ -160,7 +160,7 @@ export default function PackForm({
               onChange={(e) => setSelectValue(e.target.value)}
               className={`${inputClass} flex-1`}
             >
-              <option value="">— Choisir un produit à ajouter —</option>
+              <option value="">- Choisir un produit à ajouter -</option>
               {produitsRestants.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.brand})

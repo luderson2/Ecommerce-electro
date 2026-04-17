@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -88,7 +88,7 @@ export default async function CommandesPage() {
                 {/* Articles */}
                 <div className="px-6 py-4 flex items-center gap-3">
                   <div className="flex -space-x-2">
-                    {order.order_items.slice(0, 4).map((item, idx) => (
+                    {order.order_items.slice(0, 4).map((item) => (
                       <div
                         key={item.id}
                         className="h-10 w-10 rounded-full border-2 border-white bg-secondary/40 overflow-hidden"

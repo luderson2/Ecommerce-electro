@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Separator } from '@/components/ui/separator'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { sInscrire } from '@/lib/actions/auth'
@@ -240,7 +239,7 @@ export default function InscriptionPage() {
               <div className="flex items-start space-x-2 pt-2">
                 <Checkbox id="terms" required disabled={isPending} />
                 <Label htmlFor="terms" className="text-xs cursor-pointer leading-none">
-                  J'accepte les <Link href="/conditions" className="text-primary underline">conditions d'utilisation</Link>
+                  J&apos;accepte les <Link href="/conditions" className="text-primary underline">conditions d&apos;utilisation</Link>
                 </Label>
               </div>
 

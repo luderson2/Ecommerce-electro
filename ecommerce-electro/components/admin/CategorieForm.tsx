@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
@@ -53,7 +53,7 @@ export default function CategorieForm({ categorie }: { categorie?: CategorieInit
       <div>
         <label htmlFor="slug" className="block text-sm font-medium text-foreground mb-1.5">
           Slug (URL)
-          <span className="text-muted-foreground text-xs font-normal ml-2">— généré automatiquement</span>
+          <span className="text-muted-foreground text-xs font-normal ml-2">- généré automatiquement</span>
         </label>
         <input
           id="slug"

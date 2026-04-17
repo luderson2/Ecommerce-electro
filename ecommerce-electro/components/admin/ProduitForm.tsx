@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
@@ -38,7 +38,7 @@ export default function ProduitForm({ produit, productId }: Props) {
   const [isActive, setIsActive] = useState(produit?.is_active ?? true);
   const [formKey, setFormKey] = useState(0);
 
-  // ── Image upload (création uniquement) ──
+  // â”€â”€ Image upload (création uniquement) â”€â”€
   const [uploadedImages, setUploadedImages] = useState<{ url: string; path: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -92,8 +92,8 @@ export default function ProduitForm({ produit, productId }: Props) {
           const { data: { publicUrl } } = supabase.storage.from("products").getPublicUrl(path);
           setUploadedImages((prev) => [...prev, { url: publicUrl, path }]);
         }
-      } catch (err: any) {
-        setUploadError(`Erreur inattendue : ${err?.message ?? "inconnue"}`);
+      } catch (err: unknown) {
+        setUploadError(`Erreur inattendue : ${err instanceof Error ? err.message : "inconnue"}`);
       } finally {
         e.target.value = "";
         setIsUploading(false);
@@ -141,7 +141,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         </div>
       )}
 
-      {/* ── Nom ── */}
+      {/* â”€â”€ Nom â”€â”€ */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1.5">
           Nom du produit <span className="text-red-500">*</span>
@@ -157,11 +157,11 @@ export default function ProduitForm({ produit, productId }: Props) {
         />
       </div>
 
-      {/* ── Slug ── */}
+      {/* â”€â”€ Slug â”€â”€ */}
       <div>
         <label htmlFor="slug" className="block text-sm font-medium text-foreground mb-1.5">
           Slug (URL)
-          <span className="text-muted-foreground text-xs font-normal ml-2">— généré automatiquement</span>
+          <span className="text-muted-foreground text-xs font-normal ml-2">- généré automatiquement</span>
         </label>
         <input
           id="slug"
@@ -174,7 +174,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         />
       </div>
 
-      {/* ── Description ── */}
+      {/* â”€â”€ Description â”€â”€ */}
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1.5">
           Description
@@ -189,7 +189,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         />
       </div>
 
-      {/* ── Prix + Marque ── */}
+      {/* â”€â”€ Prix + Marque â”€â”€ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="price" className="block text-sm font-medium text-foreground mb-1.5">
@@ -226,7 +226,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         </div>
       </div>
 
-      {/* ── Stock ── */}
+      {/* â”€â”€ Stock â”€â”€ */}
       <div className="sm:w-1/2">
         <label htmlFor="stock" className="block text-sm font-medium text-foreground mb-1.5">
           Stock <span className="text-red-500">*</span>
@@ -242,7 +242,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         />
       </div>
 
-      {/* ── Toggle actif ── */}
+      {/* â”€â”€ Toggle actif â”€â”€ */}
       <input type="hidden" name="is_active" value={isActive ? "true" : "false"} />
       <div className="flex items-center justify-between p-4 bg-surface rounded-lg border border-border">
         <div>
@@ -266,7 +266,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         </button>
       </div>
 
-      {/* ── Upload images (création uniquement) ── */}
+      {/* â”€â”€ Upload images (création uniquement) â”€â”€ */}
       {!isEdit && id && (
         <div className="space-y-3">
           <div>
@@ -350,7 +350,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         </div>
       )}
 
-      {/* ── Actions ── */}
+      {/* â”€â”€ Actions â”€â”€ */}
       <div className="flex items-center gap-3 pt-2 border-t border-border">
         <button
           type="submit"

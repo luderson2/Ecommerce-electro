@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -131,7 +131,7 @@ export default async function AdminCommandesPage({
                 );
                 const imageUrl = images[0]?.url ?? null;
 
-                const joursAttente = Math.floor((Date.now() - new Date(commande.created_at).getTime()) / 86_400_000);
+                const joursAttente = Math.floor((new Date().getTime() - new Date(commande.created_at).getTime()) / 86_400_000);
                 const urgent = commande.status === "en_attente" && joursAttente >= 2;
 
                 return (

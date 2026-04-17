@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -61,7 +61,7 @@ function ComparateurContent() {
           .order("name");
         setTousLesProduits(data ?? []);
       } catch {
-        // Erreur silencieuse — on reste avec une liste vide
+        // Erreur silencieuse - on reste avec une liste vide
       } finally {
         setChargement(false);
       }
@@ -130,7 +130,7 @@ function ComparateurContent() {
 
   const disponibles = tousLesProduits.filter((p) => !compareIds.includes(p.id));
 
-  // Construire les clés de specs — union de toutes les specs des produits comparés
+  // Construire les clés de specs - union de toutes les specs des produits comparés
   const specKeys = [
     ...new Set(produits.flatMap((p) => Object.keys(p.specs ?? {}))),
   ];
@@ -168,11 +168,11 @@ function ComparateurContent() {
       label: "Description",
       valeurs: (ps: ProduitComparateur[]) =>
         ps.map((p) => ({
-          text: p.description ?? "—",
+          text: p.description ?? "-",
           raw: p.description ?? "",
           node: (
             <span className="text-xs text-muted-foreground line-clamp-3">
-              {p.description ?? "—"}
+              {p.description ?? "-"}
             </span>
           ),
         })),
@@ -215,7 +215,7 @@ function ComparateurContent() {
             </option>
             {disponibles.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.brand} — {p.name}
+                {p.brand} - {p.name}
               </option>
             ))}
           </select>
@@ -358,7 +358,7 @@ function ComparateurContent() {
 
                 {/* Lignes specs dynamiques */}
                 {specKeys.map((cle, i) => {
-                  const vals = produits.map((p) => p.specs?.[cle] ?? "—");
+                  const vals = produits.map((p) => p.specs?.[cle] ?? "-");
                   const toutesPareil = vals.every((v) => v === vals[0]);
 
                   return (
@@ -376,7 +376,7 @@ function ComparateurContent() {
                             !toutesPareil
                               ? "font-semibold text-primary"
                               : "text-foreground"
-                          } ${val === "—" ? "text-muted-foreground" : ""}`}
+                          } ${val === "-" ? "text-muted-foreground" : ""}`}
                         >
                           {val}
                         </td>

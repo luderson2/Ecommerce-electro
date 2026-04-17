@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -104,7 +104,7 @@ export default function AdminSidebar() {
             <span className="text-white font-bold text-sm leading-none">E</span>
           </div>
           <div>
-            <p className="text-sm font-bold text-foreground leading-tight">ElectroShop</p>
+            <p className="text-sm font-bold text-foreground leading-tight">ÉlectroMétropolitain</p>
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Administration</p>
           </div>
         </Link>

@@ -1,4 +1,4 @@
-import { Refrigerator, WashingMachine, Flame, Waves, Microwave } from "lucide-react"
+﻿import { Refrigerator, WashingMachine, Flame, Waves, Microwave } from "lucide-react"
 
 export default function Categories() {
 const categories = [

@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Truck, Shield, Headphones, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ export default async function HomePage() {
     supabase
       .from("packs")
       .select(`
-        id, name, description, price,
+        id, slug, name, description, price,
         pack_products(products(id, name, price, brand, stock, product_images(url, sort_order)))
       `)
       .eq("is_active", true)
@@ -35,9 +36,29 @@ export default async function HomePage() {
   ]);
 
   const produitsVedette = (produits ?? []) as ProduitCarte[];
+  const localBusinessJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: "ÉlectroMétropolitain",
+    description: "Boutique d'électroménagers avec livraison au Québec.",
+    areaServed: "Québec",
+    email: "support@electrometropolitain.ca",
+    telephone: "+1-514-123-4567",
+    url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Montréal",
+      addressRegion: "QC",
+      addressCountry: "CA",
+    },
+  };
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+      />
       {/* Hero */}
       <section className="bg-primary text-white">
         <div className="container mx-auto px-4 py-14 md:py-20">
@@ -62,11 +83,11 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="relative aspect-square md:aspect-[4/3] bg-white/10 rounded-xl overflow-hidden hidden md:block">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/placeholder.svg"
                 alt="Électroménagers ElectroMétropolitain"
-                className="object-contain p-10 opacity-80 w-full h-full"
+                fill
+                className="object-contain p-10 opacity-80"
               />
             </div>
           </div>
@@ -192,7 +213,7 @@ export default async function HomePage() {
                       </p>
                     )}
                     <Button className="w-full bg-primary hover:bg-primary/90 text-white" asChild>
-                      <Link href={`/packs/${pack.id}`}>Voir le pack</Link>
+                      <Link href={`/packs/${pack.slug}`}>Voir le pack</Link>
                     </Button>
                   </div>
                 </div>

@@ -1,113 +1,151 @@
-# Contexte projet — ElectroShop
+# Contexte projet - ÉlectroMétropolitain
+
+Ce projet est une boutique e-commerce d'électroménagers pour un stage étudiant. Le résultat doit rester crédible pour un commerce réel: interface claire, SEO propre, sécurité correcte sur les flux paiement/admin, et code maintenable.
 
 ## Stack
-- **Framework** : Next.js 16 (App Router, Turbopack)
-- **Base de données** : Supabase (PostgreSQL)
-- **Auth** : Supabase Auth + `@supabase/ssr`
-- **Styling** : Tailwind CSS + shadcn/ui
-- **Validation** : Zod v4
-- **Paiement** : Stripe
-- **Langage** : TypeScript strict
+
+- **Framework**: Next.js 16.2.4, App Router, Turbopack
+- **Base de données**: Supabase PostgreSQL
+- **Auth**: Supabase Auth + `@supabase/ssr`
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Validation**: Zod v4
+- **Paiement**: Stripe Checkout + webhook signé
+- **Courriels**: Resend
+- **Langage**: TypeScript strict
 
 ## Structure du projet
-```
+
+```text
 app/
-  (front-office)/     ← Pages publiques (catalogue, packs, comparateur, panier…)
-  admin/              ← Dashboard admin (protégé)
-    page.tsx          ← Dashboard avec stats + graphique CA
-    produits/         ← CRUD produits
-    categories/       ← CRUD catégories
-    packs/            ← CRUD packs
-    commandes/        ← Liste + détail commandes
-    livraisons/       ← Liste + détail livraisons
-    rabais/           ← CRUD rabais (discounts)
-    sav/              ← Liste + détail demandes SAV
-    clients/          ← Liste clients
+  (front-office)/          Pages publiques
+    page.tsx               Accueil + JSON-LD Store
+    catalogue/             Catalogue + fiches produits
+    categories/[slug]/     Pages catégories SEO
+    packs/[slug]/          Pages packs SEO
+    recherche/             Recherche produits noindex
+    conditions/            Page légale
+    confidentialite/       Page légale
+    livraison-retours/     Page service
+    garantie/              Page service
+  (auth)/                  Connexion / inscription
+  (client)/compte/         Profil, panier, checkout, commandes, SAV, wishlist
+  admin/                   Dashboard admin protégé
+  api/stripe/webhook/      Webhook Stripe signé
+  robots.ts                Robots SEO
+  sitemap.ts               Sitemap dynamique
 components/
-  admin/              ← Formulaires admin (CategorieForm, PackForm, ProduitForm, RabaisForm)
-  produits/           ← ProductCard, etc.
-  comparateur/        ← Comparateur de produits
-  ui/                 ← Composants shadcn/ui
+  admin/                   Formulaires et composants admin
+  layout/                  Navbar, Footer
+  packs/                   PackActions, PackCard
+  produits/                ProductCard, ProductActions, catalogue
+  ui/                      Composants shadcn/ui
+contexts/
+  auth-context.tsx         Session utilisateur client
+  cart-context.tsx         Panier / wishlist
 lib/
-  supabase/           ← client.ts, server.ts, middleware.ts
-  actions/            ← Server Actions (categories, commandes, livraisons, packs, produits, rabais, sav)
-  validations/        ← Schémas Zod (product, pack, order, auth)
+  actions/                 Server Actions par domaine
+  payments/orders.ts       Confirmation sécurisée des commandes payées
+  supabase/                Clients Supabase client/server/admin
+  validations/             Schémas Zod
+supabase/migrations/       RPC et migrations SQL
 types/
-  database.ts         ← Types Supabase manuels (pas auto-générés)
-  index.ts            ← Types métier (Product, Order, Pack, Delivery, etc.)
+  database.ts              Types Supabase manuels
+  index.ts                 Types métier
 ```
 
-## Base de données (tables principales)
-- `profiles` — utilisateurs (role: client | admin | employee)
-- `products` — produits (slug, brand, stock, is_active)
-- `categories` — catégories (slug, parent_id nullable)
-- `product_categories` — relation produit ↔ catégorie
-- `product_images` — images produits (url, sort_order)
-- `product_accessories` — relation produit ↔ accessoire
-- `orders` — commandes (status: en_attente | payee | en_preparation | livraison | livree | annulee)
-- `order_items` — lignes de commande
-- `deliveries` — livraisons (status: planifiee | en_transit | livree | echec)
-- `service_requests` — SAV (status: ouvert | en_cours | resolu | ferme)
-- `packs` — packs produits (slug, is_active)
-- `pack_products` — relation pack ↔ produit
-- `discounts` — rabais (discount_type: percentage | fixed, is_active)
-- `wishlist` — liste de souhaits
-- `stock_alerts` — alertes de stock par email
+## Règles de sécurité
+
+- Les actions admin doivent passer par `verifierAdmin()` dans `lib/actions/_guard.ts`.
+- Les pages admin doivent rester protégées par `app/admin/layout.tsx`.
+- Ne jamais exposer `SUPABASE_SERVICE_ROLE_KEY` côté client.
+- Le client admin Supabase dans `lib/supabase/admin.ts` doit rester serveur uniquement.
+- Les prix de checkout doivent toujours être recalculés depuis Supabase.
+- Ne jamais faire confiance aux données panier client pour le prix, le nom produit, l'image ou le total.
+- La confirmation de commande doit passer par `confirmerCommandePayeeDepuisSession()` et vérifier:
+  - `stripe_session_id`
+  - `metadata.order_id`
+  - `metadata.user_id`
+  - montant Stripe
+  - devise
+  - statut payé
+- Le webhook Stripe doit vérifier `STRIPE_WEBHOOK_SECRET`.
+- La décrémentation de stock doit rester atomique via RPC `confirmer_commande_payee`.
+
+## RPC Supabase
+
+- `get_user_email(user_id)`: retourne l'email d'un utilisateur.
+- `remplacer_pack_products(p_pack_id, p_product_ids)`: remplace les produits d'un pack. Fonction `SECURITY DEFINER`, `search_path` fixé, exécution limitée aux utilisateurs authentifiés avec contrôle de rôle admin/employee dans la fonction.
+- `confirmer_commande_payee(p_order_id, p_stripe_session_id, p_payment_intent_id)`: confirme une commande et décrémente le stock en transaction.
+
+## SEO et UI/UX
+
+- La marque publique est **ÉlectroMétropolitain**. Éviter l'ancien nom `ElectroShop`.
+- Les pages publiques doivent avoir des titres et descriptions cohérents.
+- Les pages produits utilisent JSON-LD `Product` et `BreadcrumbList`.
+- Les pages catégories utilisent JSON-LD `ItemList`.
+- L'accueil utilise JSON-LD `Store`.
+- Les packs publics utilisent `/packs/[slug]`, pas l'UUID.
+- Les catégories SEO utilisent `/categories/[slug]`.
+- Les pages de recherche sont `noindex`.
+- Les liens internes doivent utiliser `next/link`.
+- Les boutons icônes doivent avoir un `aria-label`.
+- Éviter les placeholders cassés ou emojis mojibake. Utiliser `public/placeholder.svg` quand aucune image produit n'existe.
+- Le bouton "Ajouter au panier" doit être fonctionnel sur les cartes, les fiches produits et les packs.
 
 ## Conventions importantes
-- **Server Actions** : toutes dans `lib/actions/`, fichiers séparés par domaine
-- **`force-dynamic`** : toutes les pages admin ont `export const dynamic = "force-dynamic"` pour éviter le cache
-- **`staleTimes: { dynamic: 0 }`** dans `next.config.ts` pour désactiver le router cache client
-- **Types Supabase** : `types/database.ts` est écrit manuellement (pas généré par CLI) — inclut `Relationships` pour que les joins fonctionnent avec Supabase v2.99+
-- **Zod v4** : utiliser `error:` au lieu de `invalid_type_error:` dans les schemas
-- **Navigation** : toujours `<Link>` de `next/link`, jamais `<a>` pour les routes internes
-- **Apostrophes dans JSX** : utiliser `&apos;` au lieu de `'`
-- **Pas de Co-Authored-By** dans les commits (projet de stage)
 
-## Clients Supabase
-- `lib/supabase/server.ts` — pour Server Components et Server Actions
-- `lib/supabase/client.ts` — pour Client Components
+- **Server Actions**: fichiers séparés par domaine dans `lib/actions/`.
+- **Pages admin dynamiques**: conserver `export const dynamic = "force-dynamic"` sur les pages admin.
+- **Types Supabase**: `types/database.ts` est manuel. Mettre à jour les fonctions RPC dans `Database.public.Functions`.
+- **Zod v4**: utiliser `error:` au lieu de `invalid_type_error:`.
+- **Apostrophes JSX**: utiliser `&apos;` dans le texte JSX.
+- **Pas de Co-Authored-By** dans les commits.
 
-## Règle anti-boucle infinie (Client Components)
+## Règle anti-boucle infinie client
 
-**Toujours** memoïser le client Supabase dans les composants React :
+Toujours memoïser le client Supabase dans les composants React:
+
 ```ts
-// ✅ Correct
 const supabase = useMemo(() => createClient(), [])
+```
 
-// ❌ Interdit — crée une nouvelle instance à chaque render,
-//    ce qui rend les useCallback/useEffect dépendants de `supabase` instables
-//    → boucle infinie de rechargement
+Éviter:
+
+```ts
 const supabase = createClient()
 ```
 
-**Toujours** garantir que les états de chargement se réinitialisent avec `try/catch/finally` :
+Toujours réinitialiser les états de chargement, même sur early return:
+
 ```ts
-// ✅ Correct
 const fetchData = useCallback(async () => {
   if (!user?.id) {
-    setIsLoading(false)  // ← reset même sur early return
+    setIsLoading(false)
     return
   }
+
   try {
-    // ...fetch...
-  } catch (err) {
-    console.error(err)
+    // fetch
   } finally {
-    setIsLoading(false)  // ← toujours appelé
+    setIsLoading(false)
   }
 }, [user, supabase])
-
-// ❌ Interdit — early return sans reset → spinner infini
-const fetchData = async () => {
-  if (!user?.id) return  // ← isLoading reste true pour toujours
-  try { ... } finally { setIsLoading(false) }
-}
 ```
 
-## Fonction Supabase RPC
-- `get_user_email(user_id)` — retourne l'email d'un utilisateur (SECURITY DEFINER)
+## Validation avant livraison
+
+Exécuter:
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+npm audit --omit=dev
+```
+
+Ces commandes doivent rester vertes avant une remise ou une mise en production.
 
 ## Branches
-- `main` — production
-- `dev` — développement actif
+
+- `main`: production
+- `dev`: développement actif

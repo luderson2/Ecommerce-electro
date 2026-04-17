@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPrix } from "@/lib/utils";
 import ProductCard, { type ProduitCarte } from "@/components/produits/ProductCard";
+import ProductActions from "@/components/produits/ProductActions";
+
+type ProductCategory = { id: string; name: string; slug: string };
 
 export async function generateMetadata({
   params,
@@ -25,17 +28,23 @@ export async function generateMetadata({
     .eq("is_active", true)
     .single();
 
-  if (!produit) return { title: "Produit introuvable" };
+  if (!produit) return { title: "Produit introuvable", robots: { index: false } };
 
   const image = [...(produit.product_images ?? [])]
     .sort((a, b) => a.sort_order - b.sort_order)[0]?.url;
 
   return {
-    title: `${produit.name} — ${produit.brand}`,
-    description: produit.description ?? `Découvrez le ${produit.name} de ${produit.brand} sur ElectroShop.`,
+    title: `${produit.name} - ${produit.brand}`,
+    description:
+      produit.description ??
+      `Découvrez le ${produit.name} de ${produit.brand} chez ÉlectroMétropolitain.`,
+    alternates: {
+      canonical: `/catalogue/${slug}`,
+    },
     openGraph: {
-      title: `${produit.name} — ${produit.brand}`,
-      description: produit.description ?? `Découvrez le ${produit.name} de ${produit.brand}.`,
+      title: `${produit.name} - ${produit.brand}`,
+      description:
+        produit.description ?? `Découvrez le ${produit.name} de ${produit.brand}.`,
       ...(image ? { images: [{ url: image }] } : {}),
     },
   };
@@ -49,7 +58,6 @@ export default async function ProduitDetailPage({
   const { slug } = await params;
   const supabase = await createClient();
 
-  // Produit principal
   const { data: produit } = await supabase
     .from("products")
     .select(`
@@ -67,13 +75,12 @@ export default async function ProduitDetailPage({
     .sort((a, b) => a.sort_order - b.sort_order);
 
   const categories = (produit.product_categories ?? [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((pc: any) => pc.categories)
-    .filter(Boolean);
+    .map((pc) => pc.categories)
+    .filter(Boolean) as ProductCategory[];
 
   const epuise = produit.stock === 0;
+  const primaryImage = images[0]?.url ?? "/placeholder.svg";
 
-  // Produits similaires (même première catégorie)
   let similaires: ProduitCarte[] = [];
   if (categories.length > 0) {
     const { data: pcRows } = await supabase
@@ -94,20 +101,75 @@ export default async function ProduitDetailPage({
     }
   }
 
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: produit.name,
+    brand: {
+      "@type": "Brand",
+      name: produit.brand,
+    },
+    description: produit.description ?? undefined,
+    image: images.map((image) => image.url),
+    sku: produit.id,
+    offers: {
+      "@type": "Offer",
+      price: produit.price,
+      priceCurrency: "CAD",
+      availability: epuise
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
+      url: `/catalogue/${produit.slug}`,
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Accueil", item: "/" },
+      { "@type": "ListItem", position: 2, name: "Catalogue", item: "/catalogue" },
+      ...(categories[0]
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: categories[0].name,
+              item: `/categories/${categories[0].slug}`,
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: categories[0] ? 4 : 3,
+        name: produit.name,
+        item: `/catalogue/${produit.slug}`,
+      },
+    ],
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Fil d'Ariane */}
-      <nav className="text-sm text-muted-foreground mb-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+
+      <nav className="text-sm text-muted-foreground mb-6" aria-label="Fil d'Ariane">
         <ol className="flex items-center gap-2 flex-wrap">
           <li><Link href="/" className="hover:text-foreground transition-colors">Accueil</Link></li>
-          <li>/</li>
+          <li aria-hidden="true">/</li>
           <li><Link href="/catalogue" className="hover:text-foreground transition-colors">Catalogue</Link></li>
           {categories[0] && (
             <>
-              <li>/</li>
+              <li aria-hidden="true">/</li>
               <li>
                 <Link
-                  href={`/catalogue?categorie=${categories[0].slug}`}
+                  href={`/categories/${categories[0].slug}`}
                   className="hover:text-foreground transition-colors"
                 >
                   {categories[0].name}
@@ -115,14 +177,12 @@ export default async function ProduitDetailPage({
               </li>
             </>
           )}
-          <li>/</li>
+          <li aria-hidden="true">/</li>
           <li className="text-foreground truncate max-w-[200px]">{produit.name}</li>
         </ol>
       </nav>
 
-      {/* Section principale */}
       <div className="grid lg:grid-cols-2 gap-10 mb-16">
-        {/* Galerie */}
         <div className="space-y-3">
           <div className="relative aspect-square bg-surface rounded-lg border border-border overflow-hidden">
             {images[0] ? (
@@ -136,7 +196,7 @@ export default async function ProduitDetailPage({
               />
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-                <span className="text-5xl mb-2">📦</span>
+                <span className="text-sm font-semibold">ÉlectroMétropolitain</span>
                 <span className="text-sm">Pas d&apos;image</span>
               </div>
             )}
@@ -159,7 +219,6 @@ export default async function ProduitDetailPage({
           )}
         </div>
 
-        {/* Infos */}
         <div className="space-y-5">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">
@@ -170,8 +229,8 @@ export default async function ProduitDetailPage({
 
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {categories.map((cat: { id: string; name: string; slug: string }) => (
-                <Link key={cat.id} href={`/catalogue?categorie=${cat.slug}`}>
+              {categories.map((cat) => (
+                <Link key={cat.id} href={`/categories/${cat.slug}`}>
                   <Badge variant="secondary" className="hover:bg-primary/10 transition-colors">
                     {cat.name}
                   </Badge>
@@ -189,7 +248,7 @@ export default async function ProduitDetailPage({
               <>
                 <Check className="h-4 w-4 text-green-600" />
                 <span className="text-sm text-green-600 font-medium">
-                  En stock{produit.stock <= 5 ? ` — ${produit.stock} restant${produit.stock > 1 ? "s" : ""}` : ""}
+                  En stock{produit.stock <= 5 ? ` - ${produit.stock} restant${produit.stock > 1 ? "s" : ""}` : ""}
                 </span>
               </>
             ) : (
@@ -210,13 +269,15 @@ export default async function ProduitDetailPage({
           <Separator />
 
           <div className="space-y-3">
-            <Button
-              className="w-full bg-accent hover:bg-accent/90 text-white"
-              size="lg"
+            <ProductActions
+              product={{
+                id: produit.id,
+                name: produit.name,
+                price: produit.price,
+                image: primaryImage,
+              }}
               disabled={epuise}
-            >
-              Ajouter au panier
-            </Button>
+            />
             <Button variant="outline" className="w-full" size="lg" asChild>
               <Link href="/catalogue">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -227,7 +288,6 @@ export default async function ProduitDetailPage({
         </div>
       </div>
 
-      {/* Produits similaires */}
       {similaires.length > 0 && (
         <section>
           <h2 className="text-xl font-bold text-foreground mb-4">Produits similaires</h2>

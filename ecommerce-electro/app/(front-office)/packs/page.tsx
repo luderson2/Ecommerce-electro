@@ -1,10 +1,13 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Packs",
+  title: "Packs électroménagers",
   description: "Économisez en achetant nos ensembles d'électroménagers sélectionnés pour vous.",
+  alternates: {
+    canonical: "/packs",
+  },
 };
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +20,7 @@ export default async function PacksPage() {
   const { data: packs } = await supabase
     .from("packs")
     .select(`
-      id, name, description, price,
+      id, slug, name, description, price,
       pack_products(products(id, price))
     `)
     .eq("is_active", true)
@@ -84,7 +87,7 @@ export default async function PacksPage() {
                   )}
 
                   <Button className="w-full bg-primary hover:bg-primary/90 text-white" asChild>
-                    <Link href={`/packs/${pack.id}`}>Voir le pack</Link>
+                    <Link href={`/packs/${pack.slug}`}>Voir le pack</Link>
                   </Button>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -117,7 +117,7 @@ export default async function AdminLivraisonsPage({
                           #{livraison.orders.id.slice(0, 8).toUpperCase()}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground italic text-xs">—</span>
+                        <span className="text-muted-foreground italic text-xs">-</span>
                       )}
                     </Link>
                   </td>
@@ -143,7 +143,7 @@ export default async function AdminLivraisonsPage({
                     <Link href={`/admin/livraisons/${livraison.id}`} className="flex items-center px-5 py-3 text-muted-foreground">
                       {livraison.delivered_at
                         ? formatDate(livraison.delivered_at)
-                        : <span className="italic">—</span>}
+                        : <span className="italic">-</span>}
                     </Link>
                   </td>
 

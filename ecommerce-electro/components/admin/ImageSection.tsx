@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
@@ -113,7 +113,7 @@ export default function ImageSection({ productId, initialImages }: ImageSectionP
     dragOver.current = index;
   };
 
-  const handleDragEnd = useCallback(async () => {
+  const handleDragEnd = async () => {
     if (dragItem.current === null || dragOver.current === null) return;
     if (dragItem.current === dragOver.current) {
       dragItem.current = null;
@@ -139,7 +139,7 @@ export default function ImageSection({ productId, initialImages }: ImageSectionP
           .eq("id", img.id)
       )
     );
-  }, [images, supabase]);
+  };
 
   return (
     <div className="space-y-4">
@@ -227,7 +227,7 @@ export default function ImageSection({ productId, initialImages }: ImageSectionP
             {isUploading ? "Envoi en cours…" : "Cliquez pour ajouter des images"}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            PNG, JPG, WebP — plusieurs fichiers acceptés
+            PNG, JPG, WebP - plusieurs fichiers acceptés
           </p>
         </div>
       </label>

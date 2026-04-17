@@ -1,6 +1,6 @@
-import type { OrderStatus, DeliveryStatus, SavStatus } from "@/types";
+﻿import type { OrderStatus, DeliveryStatus, SavStatus } from "@/types";
 
-// ─── Commandes ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Commandes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const ORDER_STATUTS: { value: OrderStatus | "tous"; label: string }[] = [
   { value: "tous",          label: "Toutes" },
@@ -30,7 +30,7 @@ export const ORDER_LABEL: Record<OrderStatus, string> = {
   annulee:       "Annulée",
 };
 
-// ─── Livraisons ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Livraisons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const DELIVERY_STATUTS: { value: DeliveryStatus | "tous"; label: string }[] = [
   { value: "tous",       label: "Toutes" },
@@ -54,7 +54,7 @@ export const DELIVERY_LABEL: Record<DeliveryStatus, string> = {
   echec:      "Échec",
 };
 
-// ─── SAV ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ SAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const SAV_STATUTS: { value: SavStatus | "tous"; label: string }[] = [
   { value: "tous",     label: "Toutes" },

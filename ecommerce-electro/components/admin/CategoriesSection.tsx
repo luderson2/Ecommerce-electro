@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -88,9 +89,9 @@ export default function CategoriesSection({
       {allCategories.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">
           Aucune catégorie disponible.{" "}
-          <a href="/admin/categories/nouvelle" className="text-primary underline">
+          <Link href="/admin/categories/nouvelle" className="text-primary underline">
             Créer une catégorie
-          </a>
+          </Link>
         </p>
       ) : (
         <div className="space-y-3">

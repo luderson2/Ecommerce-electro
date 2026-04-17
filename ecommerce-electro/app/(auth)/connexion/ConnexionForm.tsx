@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -57,7 +57,7 @@ export default function ConnexionForm() {
             id="password"
             name="password"
             type={showPassword ? 'text' : 'password'}
-            placeholder="••••••••"
+            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
             className="pl-9 pr-10"
             required
             disabled={isPending}

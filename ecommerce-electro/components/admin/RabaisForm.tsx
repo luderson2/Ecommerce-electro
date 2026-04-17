@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
@@ -113,7 +113,7 @@ export default function RabaisForm({ produits, packs, rabais }: Props) {
             defaultValue={rabais?.cible_type === "product" ? rabais.cible_id : ""}
             className={inputClass}
           >
-            <option value="">— Choisir un produit —</option>
+            <option value="">- Choisir un produit -</option>
             {produits.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name} ({p.brand})
@@ -128,7 +128,7 @@ export default function RabaisForm({ produits, packs, rabais }: Props) {
             defaultValue={rabais?.cible_type === "pack" ? rabais.cible_id : ""}
             className={inputClass}
           >
-            <option value="">— Choisir un pack —</option>
+            <option value="">- Choisir un pack -</option>
             {packs.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}

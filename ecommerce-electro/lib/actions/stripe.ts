@@ -1,13 +1,12 @@
-'use server'
+﻿'use server'
 
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
+import { confirmerCommandePayeeDepuisSession } from '@/lib/payments/orders'
 
-// Les prix ne viennent JAMAIS du client — on les recalcule depuis la DB
+// Les prix ne viennent JAMAIS du client - on les recalcule depuis la DB
 interface CartItem {
   product_id: string
-  product_name: string
-  product_image: string | null
   quantity: number
 }
 
@@ -22,9 +21,17 @@ interface ShippingAddress {
   country: string
 }
 
+type OrderShippingAddress = {
+  shipping_address_street: string | null
+  shipping_address_apartment: string | null
+  shipping_address_city: string | null
+  shipping_address_province: string | null
+  shipping_address_postal_code: string | null
+  shipping_address_country: string | null
+}
+
 export async function createCheckoutSession(
   cartItems: CartItem[],
-  returnUrl: string,
   deliveryMode?: DeliveryMode,
   tipAmount?: number,
   shippingAddress?: ShippingAddress
@@ -47,7 +54,7 @@ export async function createCheckoutSession(
     }
   }
 
-  // ─── Prix et stock : toujours depuis la DB, jamais depuis le client ───
+  // â”€â”€â”€ Prix et stock : toujours depuis la DB, jamais depuis le client â”€â”€â”€
   const productIds = cartItems.map(item => item.product_id)
 
   const { data: productsData, error: productsError } = await supabase
@@ -65,6 +72,19 @@ export async function createCheckoutSession(
     productMap[p.id] = { price: p.price, stock: p.stock, slug: p.slug, name: p.name }
   }
 
+  const { data: productImages } = await supabase
+    .from('product_images')
+    .select('product_id, url, sort_order')
+    .in('product_id', productIds)
+    .order('sort_order', { ascending: true })
+
+  const imageMap: Record<string, string> = {}
+  for (const image of productImages ?? []) {
+    if (!imageMap[image.product_id]) {
+      imageMap[image.product_id] = image.url
+    }
+  }
+
   // Vérifier que chaque produit existe et que le stock est suffisant
   for (const item of cartItems) {
     const product = productMap[item.product_id]
@@ -78,7 +98,7 @@ export async function createCheckoutSession(
     }
   }
 
-  // ─── Calcul des totaux côté serveur ───
+  // â”€â”€â”€ Calcul des totaux côté serveur â”€â”€â”€
   const subtotal = cartItems.reduce(
     (sum, item) => sum + productMap[item.product_id].price * item.quantity,
     0
@@ -93,7 +113,7 @@ export async function createCheckoutSession(
   }
   const shipping = SHIPPING_COSTS[deliveryMode ?? 'standard'] ?? (subtotal >= 500 ? 0 : 25.00)
 
-  // Pourboire clampé : 0 ≤ tip ≤ 50 (protection contre valeurs négatives ou abusives)
+  // Pourboire clampé : 0 â‰¤ tip â‰¤ 50 (protection contre valeurs négatives ou abusives)
   const tip = Math.max(0, Math.min(tipAmount ?? 0, 50))
 
   const total = Math.round((subtotal + tax + shipping + tip) * 100) / 100
@@ -101,7 +121,7 @@ export async function createCheckoutSession(
   const slugMap: Record<string, string> = {}
   for (const p of productsData) slugMap[p.id] = p.slug
 
-  // ─── Création de la commande ───
+  // â”€â”€â”€ Création de la commande â”€â”€â”€
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -129,14 +149,14 @@ export async function createCheckoutSession(
     throw new Error('Erreur lors de la creation de la commande')
   }
 
-  // ─── Lignes de commande avec prix DB (jamais prix client) ───
+  // â”€â”€â”€ Lignes de commande avec prix DB (jamais prix client) â”€â”€â”€
   const orderItems = cartItems.map(item => ({
     order_id:      order.id,
     product_id:    item.product_id,
     quantity:      item.quantity,
     unit_price:    productMap[item.product_id].price,
-    product_name:  item.product_name,
-    product_image: item.product_image,
+    product_name:  productMap[item.product_id].name,
+    product_image: imageMap[item.product_id] ?? null,
     product_slug:  slugMap[item.product_id] ?? null,
   }))
 
@@ -150,13 +170,13 @@ export async function createCheckoutSession(
     throw new Error("Erreur lors de l'ajout des articles de la commande")
   }
 
-  // ─── Stripe line items avec prix DB ───
+  // â”€â”€â”€ Stripe line items avec prix DB â”€â”€â”€
   const lineItems = cartItems.map(item => ({
     price_data: {
       currency: 'cad',
       product_data: {
-        name: item.product_name,
-        ...(item.product_image ? { images: [item.product_image] } : {}),
+        name: productMap[item.product_id].name,
+        ...(imageMap[item.product_id] ? { images: [imageMap[item.product_id]] } : {}),
       },
       unit_amount: Math.round(productMap[item.product_id].price * 100),
     },
@@ -196,11 +216,12 @@ export async function createCheckoutSession(
     })
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
   const session = await stripe.checkout.sessions.create({
     line_items: lineItems,
     mode: 'payment',
-    success_url: `${returnUrl}/compte/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
-    cancel_url:  `${returnUrl}/compte/checkout?canceled=true&order_id=${order.id}`,
+    success_url: `${siteUrl}/compte/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
+    cancel_url:  `${siteUrl}/compte/checkout?canceled=true&order_id=${order.id}`,
     metadata: {
       order_id: order.id,
       user_id:  user.id,
@@ -211,6 +232,17 @@ export async function createCheckoutSession(
   if (!session.url) {
     await supabase.from('orders').delete().eq('id', order.id)
     throw new Error('Impossible de generer le lien de paiement Stripe')
+  }
+
+  const { error: sessionUpdateError } = await supabase
+    .from('orders')
+    .update({ stripe_session_id: session.id })
+    .eq('id', order.id)
+    .eq('user_id', user.id)
+
+  if (sessionUpdateError) {
+    await supabase.from('orders').delete().eq('id', order.id)
+    throw new Error('Impossible de finaliser la session de paiement')
   }
 
   return { url: session.url, orderId: order.id }
@@ -238,25 +270,21 @@ export async function confirmOrder(orderId: string, sessionId: string) {
     throw new Error("Le paiement n'a pas ete complete")
   }
 
-  // Garde anti-rejeu : on ne confirme que si la commande est encore en_attente
-  const { data: updatedOrder, error: updateError } = await supabase
+  await confirmerCommandePayeeDepuisSession(session, orderId, user.id)
+
+  const { data: updatedOrder, error: orderError } = await supabase
     .from('orders')
-    .update({
-      status:           'payee',
-      stripe_payment_id: session.payment_intent as string,
-    })
-    .eq('id', orderId)
-    .eq('user_id', user.id)
-    .eq('status', 'en_attente')          // ← empêche la double confirmation
     .select(
       'shipping_address_street, shipping_address_apartment, shipping_address_city, ' +
       'shipping_address_province, shipping_address_postal_code, shipping_address_country'
     )
+    .eq('id', orderId)
+    .eq('user_id', user.id)
     .single()
+    .returns<OrderShippingAddress>()
 
-  if (updateError) {
-    console.error('Erreur lors de la mise a jour de la commande:', updateError)
-    throw new Error('Erreur lors de la mise a jour de la commande')
+  if (orderError || !updatedOrder) {
+    throw new Error('Commande introuvable apres paiement')
   }
 
   // Mettre à jour l'adresse du profil avec la dernière adresse de livraison

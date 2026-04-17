@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const connexionSchema = z.object({
   email: z.string().email("Adresse courriel invalide"),

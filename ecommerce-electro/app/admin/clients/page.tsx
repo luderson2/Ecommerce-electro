@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Users, ShoppingCart } from "lucide-react";
@@ -161,7 +161,7 @@ export default async function AdminClientsPage({
                     {/* Nom */}
                     <td className="px-5 py-3">
                       <p className="font-medium text-foreground">
-                        {[profil.first_name, profil.last_name].filter(Boolean).join(" ") || profil.email || "—"}
+                        {[profil.first_name, profil.last_name].filter(Boolean).join(" ") || profil.email || "-"}
                       </p>
                       {profil.address_street && (
                         <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[200px]">
@@ -172,7 +172,7 @@ export default async function AdminClientsPage({
 
                     {/* Téléphone */}
                     <td className="px-5 py-3 text-muted-foreground">
-                      {profil.phone ?? <span className="italic">—</span>}
+                      {profil.phone ?? <span className="italic">-</span>}
                     </td>
 
                     {/* Rôle */}
@@ -200,7 +200,7 @@ export default async function AdminClientsPage({
 
                     {/* Total dépensé */}
                     <td className="px-5 py-3 font-semibold text-foreground tabular-nums">
-                      {totalDepense > 0 ? formatPrix(totalDepense) : <span className="font-normal text-muted-foreground italic">—</span>}
+                      {totalDepense > 0 ? formatPrix(totalDepense) : <span className="font-normal text-muted-foreground italic">-</span>}
                     </td>
 
                     {/* Action */}

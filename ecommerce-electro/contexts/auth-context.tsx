@@ -65,12 +65,10 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
     }
 
     
-    const userProfile = profile as any as UserProfile;
-
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      profile: userProfile,
+      profile,
     }
   }
 
@@ -106,6 +104,8 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
     return () => {
       subscription.unsubscribe()
     }
+  // Le client Supabase est memoïsé; ce chargement doit rester exécuté une seule fois.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const refreshUser = async () => {
@@ -137,7 +137,7 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
       }
 
       return { success: true }
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Une erreur est survenue lors de la connexion' }
     }
   }
@@ -179,7 +179,7 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
       }
 
       return { success: true }
-    } catch (error) {
+    } catch {
       return { success: false, error: "Erreur lors de la création du compte" }
     }
   }

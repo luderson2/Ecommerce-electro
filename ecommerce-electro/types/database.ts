@@ -400,6 +400,14 @@ export type Database = {
         Args: { p_pack_id: string; p_product_ids: string[] };
         Returns: void;
       };
+      confirmer_commande_payee: {
+        Args: {
+          p_order_id: string;
+          p_stripe_session_id: string;
+          p_payment_intent_id: string | null;
+        };
+        Returns: void;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
