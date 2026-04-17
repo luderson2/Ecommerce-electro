@@ -1,9 +1,8 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Mail, Lock, User, Phone, Check, X, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, Phone, Check, X, Loader2, MailCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,7 +16,7 @@ import { sInscrire } from '@/lib/actions/auth'
 export default function InscriptionPage() {
   const [state, formAction, isPending] = useActionState(sInscrire, null)
   const [showPassword, setShowPassword] = useState(false)
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -40,6 +39,43 @@ export default function InscriptionPage() {
 
   const allPasswordChecks = Object.values(passwordChecks).every(Boolean)
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
+
+  // Compte créé, attente de confirmation email
+  if (state?.needsConfirmation) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-12">
+          <Card className="border bg-card w-full max-w-md mx-auto text-center">
+            <CardHeader>
+              <div className="flex justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <MailCheck className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <CardTitle className="text-xl">Vérifiez vos courriels</CardTitle>
+              <CardDescription className="mt-2">
+                Un lien de confirmation a été envoyé à votre adresse courriel.
+                Cliquez dessus pour activer votre compte.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Vous ne trouvez pas le courriel ?  Vérifiez vos indésirables.
+              </p>
+              <Link
+                href="/connexion"
+                className="mt-4 inline-block text-sm text-primary font-medium hover:underline"
+              >
+                Retour à la connexion
+              </Link>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">

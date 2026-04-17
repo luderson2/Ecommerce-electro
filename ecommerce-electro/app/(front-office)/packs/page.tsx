@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Packs",
+  description: "Économisez en achetant nos ensembles d'électroménagers sélectionnés pour vous.",
+};
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

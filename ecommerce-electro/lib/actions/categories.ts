@@ -1,9 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { verifierAdmin } from "./_guard";
 
 const categorieSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -15,6 +15,9 @@ export async function creerCategorie(
   _prevState: { error?: string } | null,
   formData: FormData
 ): Promise<{ error: string }> {
+  const { supabase, erreur } = await verifierAdmin();
+  if (!supabase) return { error: erreur };
+
   const raw = {
     name: formData.get("name") as string,
     slug: formData.get("slug") as string,
@@ -26,14 +29,13 @@ export async function creerCategorie(
     return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   }
 
-  const supabase = await createClient();
   const { error } = await supabase.from("categories").insert({
     ...parsed.data,
     description: parsed.data.description ?? null,
     parent_id: null,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: "Création impossible. Vérifiez que le slug n'est pas déjà utilisé." };
 
   redirect("/admin/categories");
 }
@@ -42,6 +44,9 @@ export async function modifierCategorie(
   _prevState: { error?: string } | null,
   formData: FormData
 ): Promise<{ error: string }> {
+  const { supabase, erreur } = await verifierAdmin();
+  if (!supabase) return { error: erreur };
+
   const id = formData.get("id") as string;
   if (!id) return { error: "Identifiant manquant." };
 
@@ -56,13 +61,14 @@ export async function modifierCategorie(
     return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   }
 
-  const supabase = await createClient();
   const { error } = await supabase
     .from("categories")
     .update(parsed.data)
-    .eq("id", id);
+    .eq("id", id)
+    .select("id")
+    .single();
 
-  if (error) return { error: error.message };
+  if (error) return { error: "Mise à jour impossible. Vérifiez vos permissions." };
 
   revalidatePath("/admin/categories");
   redirect("/admin/categories");
@@ -72,10 +78,11 @@ export async function supprimerCategorie(
   _prevState: { error?: string; success?: boolean } | null,
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const { supabase, erreur } = await verifierAdmin();
+  if (!supabase) return { error: erreur };
+
   const id = formData.get("id") as string;
   if (!id) return { error: "Identifiant manquant." };
-
-  const supabase = await createClient();
 
   // Vérifier s'il y a des produits liés
   const { count } = await supabase
@@ -88,7 +95,7 @@ export async function supprimerCategorie(
   }
 
   const { error } = await supabase.from("categories").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: "Suppression impossible. Vérifiez vos permissions." };
 
   revalidatePath("/admin/categories");
   return { success: true };

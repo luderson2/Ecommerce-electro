@@ -2,9 +2,10 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Package } from "lucide-react";
+import { Package, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatPrix } from "@/lib/utils";
+import { formatPrix, formatDate } from "@/lib/utils";
+import { ORDER_STATUTS, ORDER_BADGE, ORDER_LABEL } from "@/lib/constants/statuts";
 import type { OrderStatus } from "@/types";
 
 type CommandeLigne = {
@@ -12,7 +13,7 @@ type CommandeLigne = {
   status: OrderStatus;
   total_amount: number;
   created_at: string;
-  profiles: { full_name: string } | null;
+  profiles: { first_name: string | null; last_name: string | null } | null;
   order_items: {
     id: string;
     products: {
@@ -21,48 +22,12 @@ type CommandeLigne = {
   }[];
 };
 
-const STATUTS: { value: OrderStatus | "tous"; label: string }[] = [
-  { value: "tous", label: "Toutes" },
-  { value: "en_attente", label: "En attente" },
-  { value: "payee", label: "Payée" },
-  { value: "en_preparation", label: "En préparation" },
-  { value: "livraison", label: "En livraison" },
-  { value: "livree", label: "Livrée" },
-  { value: "annulee", label: "Annulée" },
-];
-
-const BADGE: Record<OrderStatus, string> = {
-  en_attente: "bg-yellow-100 text-yellow-800",
-  payee: "bg-blue-100 text-blue-800",
-  en_preparation: "bg-purple-100 text-purple-800",
-  livraison: "bg-orange-100 text-orange-800",
-  livree: "bg-green-100 text-green-800",
-  annulee: "bg-red-100 text-red-800",
-};
-
-const LABEL: Record<OrderStatus, string> = {
-  en_attente: "En attente",
-  payee: "Payée",
-  en_preparation: "En préparation",
-  livraison: "En livraison",
-  livree: "Livrée",
-  annulee: "Annulée",
-};
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 export default async function AdminCommandesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ statut?: string }>;
+  searchParams: Promise<{ statut?: string; user_id?: string }>;
 }) {
-  const { statut } = await searchParams;
+  const { statut, user_id } = await searchParams;
   const filtreStatut = statut && statut !== "tous" ? statut : null;
 
   const supabase = await createClient();
@@ -71,7 +36,7 @@ export default async function AdminCommandesPage({
     .from("orders")
     .select(`
       id, status, total_amount, created_at,
-      profiles(full_name),
+      profiles(first_name, last_name),
       order_items(id, products(product_images(url, sort_order)))
     `)
     .order("created_at", { ascending: false });
@@ -80,10 +45,11 @@ export default async function AdminCommandesPage({
     query = query.eq("status", filtreStatut as OrderStatus);
   }
 
-  const { data: commandes, error } = await query as unknown as {
-    data: CommandeLigne[] | null;
-    error: { message: string } | null;
-  };
+  if (user_id) {
+    query = query.eq("user_id", user_id);
+  }
+
+  const { data: commandes, error } = await query.returns<CommandeLigne[]>();
 
   const statutActif = statut ?? "tous";
 
@@ -94,13 +60,13 @@ export default async function AdminCommandesPage({
         <h1 className="text-2xl font-bold text-foreground">Commandes</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {commandes?.length ?? 0} commande{(commandes?.length ?? 0) !== 1 ? "s" : ""}
-          {filtreStatut ? ` · filtrées par "${LABEL[filtreStatut as OrderStatus]}"` : " au total"}
+          {filtreStatut ? ` · filtrées par "${ORDER_LABEL[filtreStatut as OrderStatus]}"` : " au total"}
         </p>
       </div>
 
       {/* Filtres par statut */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {STATUTS.map((s) => (
+        {ORDER_STATUTS.map((s) => (
           <Link
             key={s.value}
             href={s.value === "tous" ? "/admin/commandes" : `/admin/commandes?statut=${s.value}`}
@@ -123,8 +89,8 @@ export default async function AdminCommandesPage({
       )}
 
       {/* Tableau */}
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead className="bg-surface border-b border-border">
             <tr>
               <th className="w-16 px-4 py-3" />
@@ -158,15 +124,18 @@ export default async function AdminCommandesPage({
             ) : (
               (commandes ?? []).map((commande) => {
                 const nbArticles = commande.order_items?.length ?? 0;
-                const client = commande.profiles?.full_name ?? "Client inconnu";
+                const client = [commande.profiles?.first_name, commande.profiles?.last_name].filter(Boolean).join(" ") || "Client inconnu";
                 const premierItem = commande.order_items?.[0];
                 const images = [...(premierItem?.products?.product_images ?? [])].sort(
                   (a, b) => a.sort_order - b.sort_order
                 );
                 const imageUrl = images[0]?.url ?? null;
 
+                const joursAttente = Math.floor((Date.now() - new Date(commande.created_at).getTime()) / 86_400_000);
+                const urgent = commande.status === "en_attente" && joursAttente >= 2;
+
                 return (
-                  <tr key={commande.id} className="hover:bg-surface/60 transition-colors">
+                  <tr key={commande.id} className={`hover:bg-surface/60 transition-colors ${urgent ? "bg-orange-50/60" : ""}`}>
                     {/* Miniature */}
                     <td className="p-0 w-16">
                       <Link href={`/admin/commandes/${commande.id}`} className="flex items-center justify-center px-3 py-2 h-full">
@@ -178,6 +147,7 @@ export default async function AdminCommandesPage({
                               width={40}
                               height={40}
                               className="object-contain w-full h-full p-0.5"
+                              unoptimized={imageUrl.includes("placehold.co")}
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -201,8 +171,10 @@ export default async function AdminCommandesPage({
                     </td>
                     {/* Date */}
                     <td className="p-0">
-                      <Link href={`/admin/commandes/${commande.id}`} className="flex items-center px-4 py-3 text-muted-foreground">
-                        {formatDate(commande.created_at)}
+                      <Link href={`/admin/commandes/${commande.id}`} className="flex items-center gap-1.5 px-4 py-3 text-muted-foreground">
+                        {urgent && <AlertCircle size={13} className="text-orange-500 shrink-0" />}
+                        <span className={urgent ? "text-orange-700 font-medium" : ""}>{formatDate(commande.created_at)}</span>
+                        {urgent && <span className="text-xs text-orange-500">({joursAttente}j)</span>}
                       </Link>
                     </td>
                     {/* Articles */}
@@ -220,8 +192,8 @@ export default async function AdminCommandesPage({
                     {/* Statut */}
                     <td className="p-0">
                       <Link href={`/admin/commandes/${commande.id}`} className="flex items-center px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${BADGE[commande.status]}`}>
-                          {LABEL[commande.status]}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${ORDER_BADGE[commande.status]}`}>
+                          {ORDER_LABEL[commande.status]}
                         </span>
                       </Link>
                     </td>

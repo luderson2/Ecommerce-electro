@@ -4,9 +4,16 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
-          full_name: string;
+          first_name: string | null;
+          last_name: string | null;
+          email: string | null;
           phone: string | null;
-          address: string | null;
+          address_street: string | null;
+          address_apartment: string | null;
+          address_city: string | null;
+          address_province: string | null;
+          address_postal_code: string | null;
+          address_country: string | null;
           role: "client" | "admin" | "employee";
           created_at: string;
         };
@@ -24,13 +31,14 @@ export type Database = {
           brand: string;
           stock: number;
           is_active: boolean;
+          specs: Record<string, string>;
           created_at: string;
           updated_at: string;
         };
         Insert: Omit<
           Database["public"]["Tables"]["products"]["Row"],
-          "id" | "created_at" | "updated_at"
-        >;
+          "id" | "created_at" | "updated_at" | "specs"
+        > & { specs?: Record<string, string> };
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
         Relationships: [];
       };
@@ -41,8 +49,9 @@ export type Database = {
           slug: string;
           description: string | null;
           parent_id: string | null;
+          created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["categories"]["Row"], "id">;
+        Insert: Omit<Database["public"]["Tables"]["categories"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["categories"]["Insert"]>;
         Relationships: [
           {
@@ -60,7 +69,18 @@ export type Database = {
           user_id: string;
           status: "en_attente" | "payee" | "en_preparation" | "livraison" | "livree" | "annulee";
           total_amount: number;
+          subtotal: number | null;
+          tax: number | null;
+          shipping: number | null;
           stripe_payment_id: string | null;
+          stripe_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          shipping_address_street: string | null;
+          shipping_address_apartment: string | null;
+          shipping_address_city: string | null;
+          shipping_address_province: string | null;
+          shipping_address_postal_code: string | null;
+          shipping_address_country: string | null;
           created_at: string;
         };
         Insert: Omit<
@@ -85,6 +105,9 @@ export type Database = {
           product_id: string;
           quantity: number;
           unit_price: number;
+          product_name: string | null;
+          product_image: string | null;
+          product_slug: string | null;
         };
         Insert: Omit<Database["public"]["Tables"]["order_items"]["Row"], "id">;
         Update: Partial<Database["public"]["Tables"]["order_items"]["Insert"]>;
@@ -160,11 +183,46 @@ export type Database = {
           }
         ];
       };
+      cart_items: {
+        Row: {
+          id: string;
+          user_id: string;
+          product_id: string;
+          product_name: string;
+          product_price: number;
+          product_image: string | null;
+          quantity: number;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: Omit<Database["public"]["Tables"]["cart_items"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["cart_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cart_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       wishlist: {
         Row: {
           id: string;
           user_id: string;
           product_id: string;
+          product_name: string | null;
+          product_price: number | null;
+          product_image: string | null;
+          product_slug: string | null;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["wishlist"]["Row"], "id" | "created_at">;
@@ -213,8 +271,9 @@ export type Database = {
           description: string | null;
           price: number;
           is_active: boolean;
+          created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["packs"]["Row"], "id">;
+        Insert: Omit<Database["public"]["Tables"]["packs"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["packs"]["Insert"]>;
         Relationships: [];
       };
@@ -336,6 +395,10 @@ export type Database = {
       get_user_email: {
         Args: { user_id: string };
         Returns: string;
+      };
+      remplacer_pack_products: {
+        Args: { p_pack_id: string; p_product_ids: string[] };
+        Returns: void;
       };
     };
     Enums: { [_ in never]: never };

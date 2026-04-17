@@ -17,13 +17,11 @@ type PackLigne = {
 export default async function AdminPacksPage() {
   const supabase = await createClient();
 
-  const { data: packs, error } = (await supabase
+  const { data: packs, error } = await supabase
     .from("packs")
     .select("id, name, description, price, is_active, pack_products(count)")
-    .order("name")) as unknown as {
-    data: PackLigne[] | null;
-    error: { message: string } | null;
-  };
+    .order("name")
+    .returns<PackLigne[]>();
 
   return (
     <div>
@@ -50,8 +48,8 @@ export default async function AdminPacksPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-surface border-b border-border">
             <tr>
               <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">

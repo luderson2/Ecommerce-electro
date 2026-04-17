@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Truck, Shield, Headphones, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,12 +62,11 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="relative aspect-square md:aspect-[4/3] bg-white/10 rounded-xl overflow-hidden hidden md:block">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src="/placeholder.svg"
                 alt="Électroménagers ElectroMétropolitain"
-                fill
-                className="object-contain p-10 opacity-80"
-                priority
+                className="object-contain p-10 opacity-80 w-full h-full"
               />
             </div>
           </div>

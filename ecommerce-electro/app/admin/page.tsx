@@ -2,12 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/server";
 import StatCard from "@/components/admin/StatCard";
-import { Package, ShoppingCart, DollarSign, Clock } from "lucide-react";
+import { Package, ShoppingCart, DollarSign, Clock, AlertTriangle, Truck } from "lucide-react";
 import { formatPrix } from "@/lib/utils";
 import Link from "next/link";
 import type { OrderStatus } from "@/types";
 import ChartCAMensuel from "@/components/admin/ChartCAMensuel";
-import { AlertTriangle } from "lucide-react";
 
 const SEUIL_STOCK_BAS = 5;
 
@@ -38,7 +37,7 @@ export default async function AdminDashboardPage() {
     { count: commandesEnAttente },
     { data: chiffreAffaires },
     { data: dernieresCommandes },
-    donneesMensuelles,
+    { data: donneesMensuelles },
     { data: stockBas },
   ] = await Promise.all([
     supabase
@@ -58,7 +57,7 @@ export default async function AdminDashboardPage() {
       .neq("status", "annulee"),
     supabase
       .from("orders")
-      .select("id, status, total_amount, created_at, profiles(full_name)")
+      .select("id, status, total_amount, created_at, profiles(first_name, last_name)")
       .order("created_at", { ascending: false })
       .limit(8),
     supabase
@@ -83,7 +82,7 @@ export default async function AdminDashboardPage() {
     return { annee: date.getFullYear(), moisIndex: date.getMonth(), mois: moisLabels[date.getMonth()], ca: 0 };
   });
 
-  for (const commande of donneesMensuelles?.data ?? []) {
+  for (const commande of donneesMensuelles ?? []) {
     const d = new Date(commande.created_at);
     const entree = caMensuel.find(
       (m) => m.annee === d.getFullYear() && m.moisIndex === d.getMonth()
@@ -102,11 +101,13 @@ export default async function AdminDashboardPage() {
           label="Produits actifs"
           value={String(totalProduits ?? 0)}
           icon={Package}
+          href="/admin/produits"
         />
         <StatCard
           label="Commandes totales"
           value={String(totalCommandes ?? 0)}
           icon={ShoppingCart}
+          href="/admin/commandes"
         />
         <StatCard
           label="Chiffre d'affaires"
@@ -121,7 +122,27 @@ export default async function AdminDashboardPage() {
           sous_label="Commandes à traiter"
           icon={Clock}
           variante={commandesEnAttente && commandesEnAttente > 0 ? "warning" : "default"}
+          href="/admin/commandes?statut=en_attente"
         />
+      </div>
+
+      {/* Actions rapides */}
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { href: "/admin/produits/nouveau", label: "Nouveau produit", icon: Package },
+          { href: "/admin/commandes?statut=payee", label: "Commandes payées", icon: ShoppingCart },
+          { href: "/admin/livraisons", label: "Gérer livraisons", icon: Clock },
+          { href: "/admin/sav?statut=ouvert", label: "SAV ouverts", icon: AlertTriangle },
+        ].map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className="flex items-center gap-2.5 bg-white border border-border rounded-lg px-4 py-3 text-sm font-medium text-foreground hover:bg-surface hover:border-primary/30 transition-all group"
+          >
+            <Icon size={15} className="text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+            <span className="truncate">{label}</span>
+          </Link>
+        ))}
       </div>
 
       {/* Dernières commandes */}
@@ -155,9 +176,8 @@ export default async function AdminDashboardPage() {
               <tbody className="divide-y divide-border">
                 {dernieresCommandes.map((commande) => {
                   const statut = commande.status as OrderStatus;
-                  const client = Array.isArray(commande.profiles)
-                    ? commande.profiles[0]?.full_name
-                    : (commande.profiles as { full_name: string } | null)?.full_name;
+                  const p = Array.isArray(commande.profiles) ? commande.profiles[0] : commande.profiles as { first_name: string | null; last_name: string | null } | null;
+                  const client = [p?.first_name, p?.last_name].filter(Boolean).join(" ") || null;
                   return (
                     <tr key={commande.id} className="hover:bg-surface transition-colors">
                       <td className="px-5 py-3">

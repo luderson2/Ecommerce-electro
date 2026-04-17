@@ -26,12 +26,11 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
- const {
+  const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-
 
   const protectedPaths = ["/compte", "/admin", "/panier", "/favoris", "/checkout"];
   const isProtectedPath = protectedPaths.some((p) => path.startsWith(p));
@@ -39,17 +38,18 @@ export async function updateSession(request: NextRequest) {
   if (isProtectedPath && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/connexion";
-    url.searchParams.set("next", path); 
+    url.searchParams.set("next", path);
     return NextResponse.redirect(url);
   }
 
-
+  // Rediriger les utilisateurs déjà connectés hors des pages d'auth
+  // La vérification du rôle (admin | employee) est faite dans app/admin/layout.tsx
   const authPaths = ["/connexion", "/inscription"];
   const isAuthPath = authPaths.some((p) => path === p);
 
   if (isAuthPath && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/compte"; 
+    url.pathname = "/compte";
     return NextResponse.redirect(url);
   }
 

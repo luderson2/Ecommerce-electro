@@ -36,6 +36,7 @@ export default function ProductCard({
   const { addToCart, addToWishlist, removeFromWishlist, isInCart, isInWishlist } = useCart();
   
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
 
   const imageUrl = produit.product_images
@@ -56,6 +57,7 @@ export default function ProductCard({
     }
 
     setIsAddingToCart(true);
+    setCartError(null);
     try {
       await addToCart({
         id: produit.id,
@@ -63,6 +65,8 @@ export default function ProductCard({
         price: produit.price,
         image: imageUrl || '',
       });
+    } catch (err: any) {
+      setCartError(err.message || 'Erreur lors de l\'ajout au panier');
     } finally {
       setIsAddingToCart(false);
     }
@@ -107,6 +111,7 @@ export default function ProductCard({
               fill
               className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              unoptimized={imageUrl.includes("placehold.co")}
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
@@ -200,6 +205,9 @@ export default function ProductCard({
             )}
             {inCart ? 'Dans le panier' : 'Ajouter au panier'}
           </Button>
+          {cartError && (
+            <p className="text-xs text-destructive mt-1 text-center">{cartError}</p>
+          )}
         </div>
       </div>
     </article>

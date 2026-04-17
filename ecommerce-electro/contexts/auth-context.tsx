@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -10,7 +10,12 @@ export interface UserProfile {
   first_name: string | null
   last_name: string | null
   phone: string | null
-  address: string | null
+  address_street: string | null
+  address_apartment: string | null
+  address_city: string | null
+  address_province: string | null
+  address_postal_code: string | null
+  address_country: string | null
   role: 'client' | 'admin' | 'employee'
 }
 
@@ -42,7 +47,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
     const { data: profile, error } = await supabase
@@ -71,13 +76,17 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user: supabaseUser } } = await supabase.auth.getUser()
-      
-      if (supabaseUser) {
-        const userData = await fetchUserProfile(supabaseUser)
-        setUser(userData)
+      try {
+        const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+        if (supabaseUser) {
+          const userData = await fetchUserProfile(supabaseUser)
+          setUser(userData)
+        }
+      } catch {
+        // Session invalide ou erreur réseau — on reste déconnecté
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
 
     getUser()

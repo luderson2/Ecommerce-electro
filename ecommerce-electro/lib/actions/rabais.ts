@@ -1,9 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { verifierAdmin } from "./_guard";
 
 const rabaisSchema = z.object({
   cible_type: z.enum(["product", "pack"], { message: "Type de cible invalide" }),
@@ -41,6 +41,9 @@ export async function creerRabais(
   _prevState: { error?: string } | null,
   formData: FormData
 ): Promise<{ error: string }> {
+  const { supabase, erreur } = await verifierAdmin();
+  if (!supabase) return { error: erreur };
+
   const raw = parseFormData(formData);
   const parsed = rabaisSchema.safeParse(raw);
   if (!parsed.success) {
@@ -59,9 +62,8 @@ export async function creerRabais(
     pack_id: cible_type === "pack" ? cible_id : null,
   };
 
-  const supabase = await createClient();
   const { error } = await supabase.from("discounts").insert(insert);
-  if (error) return { error: error.message };
+  if (error) return { error: "Création impossible. Vérifiez les données saisies." };
 
   redirect("/admin/rabais");
 }
@@ -70,6 +72,9 @@ export async function modifierRabais(
   _prevState: { error?: string } | null,
   formData: FormData
 ): Promise<{ error: string }> {
+  const { supabase, erreur } = await verifierAdmin();
+  if (!supabase) return { error: erreur };
+
   const id = formData.get("id") as string;
   if (!id) return { error: "Identifiant manquant." };
 
@@ -91,9 +96,8 @@ export async function modifierRabais(
     pack_id: cible_type === "pack" ? cible_id : null,
   };
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("discounts").update(update).eq("id", id);
-  if (error) return { error: error.message };
+  const { error } = await supabase.from("discounts").update(update).eq("id", id).select("id").single();
+  if (error) return { error: "Mise à jour impossible. Vérifiez vos permissions." };
 
   revalidatePath("/admin/rabais");
   redirect("/admin/rabais");
@@ -103,12 +107,14 @@ export async function supprimerRabais(
   _prevState: { error?: string; success?: boolean } | null,
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {
+  const { supabase, erreur } = await verifierAdmin();
+  if (!supabase) return { error: erreur };
+
   const id = formData.get("id") as string;
   if (!id) return { error: "Identifiant manquant." };
 
-  const supabase = await createClient();
   const { error } = await supabase.from("discounts").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) return { error: "Suppression impossible. Vérifiez vos permissions." };
 
   revalidatePath("/admin/rabais");
   return { success: true };

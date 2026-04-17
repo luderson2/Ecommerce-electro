@@ -1,64 +1,34 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronRight, CreditCard, Truck, User, Package, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatPrix } from "@/lib/utils";
+import { formatPrix, formatDateLong } from "@/lib/utils";
+import { ORDER_BADGE, ORDER_LABEL, DELIVERY_BADGE, DELIVERY_LABEL } from "@/lib/constants/statuts";
 import type { OrderStatus } from "@/types";
 import StatutForm from "./StatutForm";
-
-const BADGE: Record<OrderStatus, string> = {
-  en_attente: "bg-yellow-100 text-yellow-800",
-  payee: "bg-blue-100 text-blue-800",
-  en_preparation: "bg-purple-100 text-purple-800",
-  livraison: "bg-orange-100 text-orange-800",
-  livree: "bg-green-100 text-green-800",
-  annulee: "bg-red-100 text-red-800",
-};
-
-const LABEL: Record<OrderStatus, string> = {
-  en_attente: "En attente",
-  payee: "Payée",
-  en_preparation: "En préparation",
-  livraison: "En livraison",
-  livree: "Livrée",
-  annulee: "Annulée",
-};
-
-const BADGE_LIVRAISON: Record<string, string> = {
-  planifiee: "bg-blue-100 text-blue-800",
-  en_transit: "bg-orange-100 text-orange-800",
-  livree: "bg-green-100 text-green-800",
-  echec: "bg-red-100 text-red-800",
-};
-
-const LABEL_LIVRAISON: Record<string, string> = {
-  planifiee: "Planifiée",
-  en_transit: "En transit",
-  livree: "Livrée",
-  echec: "Échec",
-};
-
-function formatDate(iso: string, withTime = false) {
-  return new Date(iso).toLocaleDateString("fr-CA", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  });
-}
 
 type CommandeDetail = {
   id: string;
   user_id: string;
   status: OrderStatus;
   total_amount: number;
+  subtotal: number | null;
+  tax: number | null;
+  shipping: number | null;
   stripe_payment_id: string | null;
   created_at: string;
+  shipping_address_street: string | null;
+  shipping_address_apartment: string | null;
+  shipping_address_city: string | null;
+  shipping_address_province: string | null;
+  shipping_address_postal_code: string | null;
   profiles: {
-    full_name: string;
+    first_name: string | null;
+    last_name: string | null;
     phone: string | null;
-    address: string | null;
   } | null;
   order_items: {
     id: string;
@@ -88,25 +58,25 @@ export default async function AdminCommandeDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: commande } = (await supabase
+  const { data: commandeRaw } = await supabase
     .from("orders")
     .select(`
-      id, user_id, status, total_amount, stripe_payment_id, created_at,
-      profiles(full_name, phone, address),
+      id, user_id, status, total_amount, subtotal, tax, shipping, stripe_payment_id, created_at,
+      shipping_address_street, shipping_address_apartment, shipping_address_city, shipping_address_province, shipping_address_postal_code,
+      profiles(first_name, last_name, phone),
       order_items(id, quantity, unit_price, products(name, brand, slug, product_images(url, sort_order))),
       deliveries(id, status, scheduled_date, delivered_at, notes)
     `)
     .eq("id", id)
-    .single()) as unknown as { data: CommandeDetail | null };
+    .single();
 
-  if (!commande) notFound();
+  if (!commandeRaw) notFound();
+  const commande = commandeRaw as unknown as CommandeDetail;
 
-  // Récupérer l'email via la fonction SECURITY DEFINER
-  const { data: emailData } = await supabase
-    .rpc("get_user_email", { user_id: commande.user_id });
+  const { data: emailData } = await supabase.rpc("get_user_email", { user_id: commande.user_id });
   const email = emailData as string | null;
 
-  const sousTotal = commande.order_items.reduce(
+  const sousTotal = commande.subtotal ?? commande.order_items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity,
     0
   );
@@ -133,12 +103,12 @@ export default async function AdminCommandeDetailPage({
             <h1 className="text-2xl font-bold text-foreground">
               Commande #{commande.id.slice(0, 8).toUpperCase()}
             </h1>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${BADGE[commande.status]}`}>
-              {LABEL[commande.status]}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${ORDER_BADGE[commande.status]}`}>
+              {ORDER_LABEL[commande.status]}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Passée le {formatDate(commande.created_at, true)}
+            Passée le {formatDateLong(commande.created_at, true)}
           </p>
         </div>
       </div>
@@ -172,6 +142,7 @@ export default async function AdminCommandeDetailPage({
                           width={56}
                           height={56}
                           className="object-contain w-full h-full p-1"
+                          unoptimized={imageUrl.includes("placehold.co")}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -200,10 +171,20 @@ export default async function AdminCommandeDetailPage({
                 <span>Sous-total</span>
                 <span className="tabular-nums">{formatPrix(sousTotal)}</span>
               </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Livraison</span>
-                <span className="text-green-600 font-medium">Gratuite</span>
-              </div>
+              {commande.tax != null && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Taxes (TPS + TVQ)</span>
+                  <span className="tabular-nums">{formatPrix(commande.tax)}</span>
+                </div>
+              )}
+              {commande.shipping != null && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Livraison</span>
+                  <span className={commande.shipping === 0 ? "text-green-600 font-medium" : "tabular-nums"}>
+                    {commande.shipping === 0 ? "Gratuite" : formatPrix(commande.shipping)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-foreground text-base pt-2 border-t border-border">
                 <span>Total</span>
                 <span className="tabular-nums">{formatPrix(commande.total_amount)}</span>
@@ -221,15 +202,15 @@ export default async function AdminCommandeDetailPage({
               <div className="px-5 py-4 space-y-3 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Statut</span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${BADGE_LIVRAISON[livraison.status] ?? "bg-gray-100 text-gray-700"}`}>
-                    {LABEL_LIVRAISON[livraison.status] ?? livraison.status}
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${DELIVERY_BADGE[livraison.status as keyof typeof DELIVERY_BADGE] ?? "bg-gray-100 text-gray-700"}`}>
+                    {DELIVERY_LABEL[livraison.status as keyof typeof DELIVERY_LABEL] ?? livraison.status}
                   </span>
                 </div>
                 {livraison.scheduled_date && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Date prévue</span>
                     <span className="font-medium text-foreground">
-                      {formatDate(livraison.scheduled_date)}
+                      {formatDateLong(livraison.scheduled_date)}
                     </span>
                   </div>
                 )}
@@ -237,15 +218,21 @@ export default async function AdminCommandeDetailPage({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Livré le</span>
                     <span className="font-medium text-foreground">
-                      {formatDate(livraison.delivered_at, true)}
+                      {formatDateLong(livraison.delivered_at, true)}
                     </span>
                   </div>
                 )}
-                {commande.profiles?.address && (
+                {commande.shipping_address_street && (
                   <div className="flex justify-between gap-4">
                     <span className="text-muted-foreground shrink-0">Adresse</span>
                     <span className="font-medium text-foreground text-right">
-                      {commande.profiles.address}
+                      {[
+                        commande.shipping_address_street,
+                        commande.shipping_address_apartment,
+                        commande.shipping_address_city,
+                        commande.shipping_address_province,
+                        commande.shipping_address_postal_code,
+                      ].filter(Boolean).join(', ')}
                     </span>
                   </div>
                 )}
@@ -292,7 +279,7 @@ export default async function AdminCommandeDetailPage({
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Nom complet</p>
                 <p className="font-medium text-foreground">
-                  {commande.profiles?.full_name ?? "—"}
+                  {[commande.profiles?.first_name, commande.profiles?.last_name].filter(Boolean).join(" ") || "—"}
                 </p>
               </div>
               <div>
@@ -315,9 +302,17 @@ export default async function AdminCommandeDetailPage({
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Adresse</p>
+                <p className="text-xs text-muted-foreground mb-0.5">Adresse de livraison</p>
                 <p className="font-medium text-foreground">
-                  {commande.profiles?.address ?? "—"}
+                  {commande.shipping_address_street
+                    ? [
+                        commande.shipping_address_street,
+                        commande.shipping_address_apartment,
+                        commande.shipping_address_city,
+                        commande.shipping_address_province,
+                        commande.shipping_address_postal_code,
+                      ].filter(Boolean).join(', ')
+                    : "—"}
                 </p>
               </div>
             </div>

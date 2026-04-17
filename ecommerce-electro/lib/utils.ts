@@ -22,6 +22,23 @@ export function calculerEconomie(
   return { montant, pourcentage };
 }
 
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-CA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatDateLong(iso: string, withTime = false): string {
+  return new Date(iso).toLocaleDateString("fr-CA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+  });
+}
+
 export function slugify(texte: string): string {
   return texte
     .toLowerCase()

@@ -1,33 +1,13 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Truck, User, ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatPrix } from "@/lib/utils";
+import { formatPrix, formatDateLong } from "@/lib/utils";
+import { DELIVERY_BADGE, DELIVERY_LABEL } from "@/lib/constants/statuts";
 import type { DeliveryStatus } from "@/types";
 import StatutLivraisonForm from "./StatutLivraisonForm";
-
-const BADGE: Record<DeliveryStatus, string> = {
-  planifiee:  "bg-blue-100 text-blue-800",
-  en_transit: "bg-orange-100 text-orange-800",
-  livree:     "bg-green-100 text-green-800",
-  echec:      "bg-red-100 text-red-800",
-};
-
-const LABEL: Record<DeliveryStatus, string> = {
-  planifiee:  "Planifiée",
-  en_transit: "En transit",
-  livree:     "Livrée",
-  echec:      "Échec",
-};
-
-function formatDate(iso: string, withTime = false) {
-  return new Date(iso).toLocaleDateString("fr-CA", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  });
-}
 
 type LivraisonDetail = {
   id: string;
@@ -42,9 +22,13 @@ type LivraisonDetail = {
     total_amount: number;
     status: string;
     profiles: {
-      full_name: string;
+      first_name: string | null;
+      last_name: string | null;
       phone: string | null;
-      address: string | null;
+      address_street: string | null;
+      address_city: string | null;
+      address_province: string | null;
+      address_postal_code: string | null;
     } | null;
   } | null;
 };
@@ -57,16 +41,17 @@ export default async function AdminLivraisonDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: livraison } = (await supabase
+  const { data: livraisonRaw } = await supabase
     .from("deliveries")
     .select(`
       id, status, scheduled_date, delivered_at, notes, created_at,
-      orders(id, user_id, total_amount, status, profiles(full_name, phone, address))
+      orders(id, user_id, total_amount, status, profiles(first_name, last_name, phone, address_street, address_city, address_province, address_postal_code))
     `)
     .eq("id", id)
-    .single()) as unknown as { data: LivraisonDetail | null };
+    .single();
 
-  if (!livraison) notFound();
+  if (!livraisonRaw) notFound();
+  const livraison = livraisonRaw as unknown as LivraisonDetail;
 
   const userId = livraison.orders?.user_id;
   const email = userId
@@ -96,12 +81,12 @@ export default async function AdminLivraisonDetailPage({
                 ? `#${livraison.orders.id.slice(0, 8).toUpperCase()}`
                 : "inconnue"}
             </h1>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${BADGE[livraison.status]}`}>
-              {LABEL[livraison.status]}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${DELIVERY_BADGE[livraison.status]}`}>
+              {DELIVERY_LABEL[livraison.status]}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Créée le {formatDate(livraison.created_at, true)}
+            Créée le {formatDateLong(livraison.created_at, true)}
           </p>
         </div>
       </div>
@@ -121,20 +106,26 @@ export default async function AdminLivraisonDetailPage({
                 <div>
                   <p className="text-xs text-muted-foreground mb-0.5">Date prévue</p>
                   <p className="font-medium text-foreground">
-                    {livraison.scheduled_date ? formatDate(livraison.scheduled_date) : <span className="italic text-muted-foreground">Non planifiée</span>}
+                    {livraison.scheduled_date
+                      ? formatDateLong(livraison.scheduled_date)
+                      : <span className="italic text-muted-foreground">Non planifiée</span>}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-0.5">Livrée le</p>
                   <p className="font-medium text-foreground">
-                    {livraison.delivered_at ? formatDate(livraison.delivered_at, true) : <span className="italic text-muted-foreground">—</span>}
+                    {livraison.delivered_at
+                      ? formatDateLong(livraison.delivered_at, true)
+                      : <span className="italic text-muted-foreground">—</span>}
                   </p>
                 </div>
               </div>
-              {livraison.orders?.profiles?.address && (
+              {livraison.orders?.profiles?.address_street && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-0.5">Adresse de livraison</p>
-                  <p className="font-medium text-foreground">{livraison.orders.profiles.address}</p>
+                  <p className="font-medium text-foreground">
+                    {[livraison.orders.profiles.address_street, livraison.orders.profiles.address_city, livraison.orders.profiles.address_province, livraison.orders.profiles.address_postal_code].filter(Boolean).join(', ')}
+                  </p>
                 </div>
               )}
               {livraison.notes && (
@@ -198,7 +189,7 @@ export default async function AdminLivraisonDetailPage({
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Nom complet</p>
                 <p className="font-medium text-foreground">
-                  {livraison.orders?.profiles?.full_name ?? "—"}
+                  {[livraison.orders?.profiles?.first_name, livraison.orders?.profiles?.last_name].filter(Boolean).join(" ") || "—"}
                 </p>
               </div>
               <div>

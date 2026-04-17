@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -8,6 +9,33 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrix } from "@/lib/utils";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug: id } = await params;
+  const supabase = await createClient();
+
+  const { data: pack } = await supabase
+    .from("packs")
+    .select("name, description")
+    .eq("id", id)
+    .eq("is_active", true)
+    .single();
+
+  if (!pack) return { title: "Pack introuvable" };
+
+  return {
+    title: `${pack.name} — Pack ElectroShop`,
+    description: pack.description ?? `Découvrez le pack ${pack.name} sur ElectroShop.`,
+    openGraph: {
+      title: `${pack.name} — Pack ElectroShop`,
+      description: pack.description ?? `Découvrez le pack ${pack.name}.`,
+    },
+  };
+}
 
 export default async function PackDetailPage({
   params,
@@ -57,7 +85,7 @@ export default async function PackDetailPage({
         {/* Visuel */}
         <div className="relative aspect-square bg-surface rounded-xl border border-border overflow-hidden">
           {imageUrl ? (
-            <Image src={imageUrl} alt={pack.name} fill className="object-contain p-10" priority />
+            <Image src={imageUrl} alt={pack.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-contain p-10" priority />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-7xl">📦</span>
@@ -131,7 +159,7 @@ export default async function PackDetailPage({
                 <div key={p.id} className="border border-border rounded-lg overflow-hidden bg-white">
                   <div className="relative aspect-square bg-surface">
                     {imgUrl ? (
-                      <Image src={imgUrl} alt={p.name} fill className="object-contain p-4" />
+                      <Image src={imgUrl} alt={p.name} fill sizes="(max-width: 640px) 100vw, 300px" className="object-contain p-4" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-3xl">📦</div>
                     )}

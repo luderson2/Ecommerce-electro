@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { formatDate } from "@/lib/utils";
+import { DELIVERY_STATUTS, DELIVERY_BADGE, DELIVERY_LABEL } from "@/lib/constants/statuts";
 import type { DeliveryStatus } from "@/types";
 
 type LivraisonLigne = {
@@ -13,39 +15,9 @@ type LivraisonLigne = {
   orders: {
     id: string;
     total_amount: number;
-    profiles: { full_name: string } | null;
+    profiles: { first_name: string | null; last_name: string | null } | null;
   } | null;
 };
-
-const STATUTS: { value: DeliveryStatus | "tous"; label: string }[] = [
-  { value: "tous",      label: "Toutes" },
-  { value: "planifiee", label: "Planifiées" },
-  { value: "en_transit", label: "En transit" },
-  { value: "livree",    label: "Livrées" },
-  { value: "echec",     label: "Échec" },
-];
-
-const BADGE: Record<DeliveryStatus, string> = {
-  planifiee:  "bg-blue-100 text-blue-800",
-  en_transit: "bg-orange-100 text-orange-800",
-  livree:     "bg-green-100 text-green-800",
-  echec:      "bg-red-100 text-red-800",
-};
-
-const LABEL: Record<DeliveryStatus, string> = {
-  planifiee:  "Planifiée",
-  en_transit: "En transit",
-  livree:     "Livrée",
-  echec:      "Échec",
-};
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default async function AdminLivraisonsPage({
   searchParams,
@@ -59,17 +31,14 @@ export default async function AdminLivraisonsPage({
 
   let query = supabase
     .from("deliveries")
-    .select("id, status, scheduled_date, delivered_at, created_at, orders(id, total_amount, profiles(full_name))")
+    .select("id, status, scheduled_date, delivered_at, created_at, orders(id, total_amount, profiles(first_name, last_name))")
     .order("created_at", { ascending: false });
 
   if (filtreStatut) {
     query = query.eq("status", filtreStatut);
   }
 
-  const { data: livraisons, error } = await query as unknown as {
-    data: LivraisonLigne[] | null;
-    error: { message: string } | null;
-  };
+  const { data: livraisons, error } = await query.returns<LivraisonLigne[]>();
 
   const statutActif = statut ?? "tous";
 
@@ -80,13 +49,13 @@ export default async function AdminLivraisonsPage({
         <h1 className="text-2xl font-bold text-foreground">Livraisons</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {livraisons?.length ?? 0} livraison{(livraisons?.length ?? 0) !== 1 ? "s" : ""}
-          {filtreStatut ? ` · filtrées par "${LABEL[filtreStatut]}"` : " au total"}
+          {filtreStatut ? ` · filtrées par "${DELIVERY_LABEL[filtreStatut]}"` : " au total"}
         </p>
       </div>
 
       {/* Filtres par statut */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {STATUTS.map((s) => (
+        {DELIVERY_STATUTS.map((s) => (
           <Link
             key={s.value}
             href={s.value === "tous" ? "/admin/livraisons" : `/admin/livraisons?statut=${s.value}`}
@@ -109,8 +78,8 @@ export default async function AdminLivraisonsPage({
       )}
 
       {/* Tableau */}
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead className="bg-surface border-b border-border">
             <tr>
               <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -156,7 +125,7 @@ export default async function AdminLivraisonsPage({
                   {/* Client */}
                   <td className="p-0">
                     <Link href={`/admin/livraisons/${livraison.id}`} className="flex items-center px-5 py-3 text-muted-foreground">
-                      {livraison.orders?.profiles?.full_name ?? <span className="italic">Inconnu</span>}
+                      {[livraison.orders?.profiles?.first_name, livraison.orders?.profiles?.last_name].filter(Boolean).join(" ") || <span className="italic">Inconnu</span>}
                     </Link>
                   </td>
 
@@ -181,8 +150,8 @@ export default async function AdminLivraisonsPage({
                   {/* Statut */}
                   <td className="p-0">
                     <Link href={`/admin/livraisons/${livraison.id}`} className="flex items-center px-5 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${BADGE[livraison.status]}`}>
-                        {LABEL[livraison.status]}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${DELIVERY_BADGE[livraison.status]}`}>
+                        {DELIVERY_LABEL[livraison.status]}
                       </span>
                     </Link>
                   </td>

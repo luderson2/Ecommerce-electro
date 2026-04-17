@@ -66,10 +66,8 @@ export default async function AdminRabaisPage({
   const { data: tousLesRabais, error } = await supabase
     .from("discounts")
     .select("id, discount_type, value, starts_at, ends_at, is_active, product_id, pack_id, products(name), packs(name)")
-    .order("created_at", { ascending: false }) as unknown as {
-      data: RabaisLigne[] | null;
-      error: { message: string } | null;
-    };
+    .order("created_at", { ascending: false })
+    .returns<RabaisLigne[]>();
 
   const rabais = filtreStatut
     ? (tousLesRabais ?? []).filter((r) => getStatut(r) === filtreStatut)
@@ -122,8 +120,8 @@ export default async function AdminRabaisPage({
       )}
 
       {/* Tableau */}
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[750px]">
           <thead className="bg-surface border-b border-border">
             <tr>
               <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -170,15 +168,21 @@ export default async function AdminRabaisPage({
 
                     {/* Type */}
                     <td className="px-5 py-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                        Pourcentage
-                      </span>
+                      {r.discount_type === "percentage" ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                          Pourcentage
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-700">
+                          Montant fixe
+                        </span>
+                      )}
                     </td>
 
                     {/* Valeur */}
                     <td className="px-5 py-3">
                       <span className="font-bold text-accent tabular-nums text-base">
-                        -{r.value}%
+                        {r.discount_type === "percentage" ? `-${r.value}%` : `-${r.value} $`}
                       </span>
                     </td>
 

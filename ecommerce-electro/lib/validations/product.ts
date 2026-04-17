@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const produitSchema = z.object({
   name: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
-  slug: z.string().min(3, "Le slug est requis"),
+  slug: z.string().min(3, "Le slug est requis").regex(/^[a-z0-9-]+$/, "Slug invalide (minuscules, chiffres et tirets uniquement)"),
   description: z.string().optional(),
   price: z.number().positive("Le prix doit être positif"),
   brand: z.string().min(1, "La marque est requise"),

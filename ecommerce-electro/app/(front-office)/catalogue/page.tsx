@@ -1,9 +1,18 @@
+export const dynamic = "force-dynamic";
+
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { Suspense } from "react";
 import CatalogueFilters from "@/components/produits/CatalogueFilters";
 import FiltresMobile from "@/components/produits/FiltresMobile";
-import ProductCard, { type ProduitCarte } from "@/components/produits/ProductCard";
+import CatalogueGrille from "@/components/produits/CatalogueGrille";
+import { type ProduitCarte } from "@/components/produits/ProductCard";
 import TriSelect from "@/components/produits/TriSelect";
+
+export const metadata: Metadata = {
+  title: "Catalogue",
+  description: "Parcourez notre sélection complète d'électroménagers : réfrigérateurs, laveuses, cuisinières, lave-vaisselle et plus encore.",
+};
 
 interface SearchParams {
   categorie?: string;
@@ -147,11 +156,7 @@ export default async function CataloguePage({
               <p className="text-muted-foreground font-medium">Aucun produit ne correspond à vos critères.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {produits.map((produit) => (
-                <ProductCard key={produit.id} produit={produit} />
-              ))}
-            </div>
+            <CatalogueGrille produits={produits} />
           )}
         </div>
       </div>

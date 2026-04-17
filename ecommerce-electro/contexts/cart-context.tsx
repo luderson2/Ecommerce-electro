@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from './auth-context'
 
@@ -49,7 +49,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  // useMemo garantit une instance stable — évite de recréer fetchCart/fetchWishlist à chaque render
+  const supabase = useMemo(() => createClient(), [])
 
   // Fetch cart items
   const fetchCart = useCallback(async () => {
@@ -59,7 +60,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     const { data, error } = await supabase
-      .from('cart_items' as any )
+      .from('cart_items')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
@@ -69,7 +70,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setCartItems(data as unknown as CartItem[] || [])
+    setCartItems(data || [])
   }, [user, supabase])
 
   const fetchWishlist = useCallback(async () => {
@@ -106,38 +107,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = async (product: { id: string; name: string; price: number; image: string }) => {
     if (!user) return
 
-    
     const existingItem = cartItems.find(item => item.product_id === product.id)
 
     if (existingItem) {
-     
       await updateCartQuantity(product.id, existingItem.quantity + 1)
     } else {
-    
-      const { error } = await supabase.from('cart_items' as any ).insert({
+      const { error } = await supabase.from('cart_items').insert({
         user_id: user.id,
         product_id: product.id,
         product_name: product.name,
         product_price: product.price,
-        product_image: product.image,
+        product_image: product.image || null,
         quantity: 1,
+        updated_at: new Date().toISOString(),
       })
 
       if (error) {
         console.error('Erreur lors de l\'ajout au panier:', error)
-        return
+        throw new Error(error.message)
       }
 
       await fetchCart()
     }
   }
 
-  
   const removeFromCart = async (productId: string) => {
     if (!user) return
 
     const { error } = await supabase
-      .from('cart_items' as any )
+      .from('cart_items')
       .delete()
       .eq('user_id', user.id)
       .eq('product_id', productId)
@@ -150,7 +148,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await fetchCart()
   }
 
-  
   const updateCartQuantity = async (productId: string, quantity: number) => {
     if (!user) return
 
@@ -160,7 +157,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     const { error } = await supabase
-      .from('cart_items' as any )
+      .from('cart_items')
       .update({ quantity, updated_at: new Date().toISOString() })
       .eq('user_id', user.id)
       .eq('product_id', productId)
@@ -173,12 +170,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await fetchCart()
   }
 
-  
   const clearCart = async () => {
     if (!user) return
 
     const { error } = await supabase
-      .from('cart_items' as any )
+      .from('cart_items')
       .delete()
       .eq('user_id', user.id)
 

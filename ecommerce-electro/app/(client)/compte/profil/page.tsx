@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Package, Heart, MapPin, Headphones, LogOut, ChevronRight, Edit, Loader2, CheckCircle2, AlertCircle, ShoppingBag } from 'lucide-react'
+import { User, Package, Heart, Headphones, LogOut, ChevronRight, Loader2, CheckCircle2, AlertCircle, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,17 +17,22 @@ import { useCart } from '@/contexts/cart-context'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrix } from '@/lib/utils'
 import { StatusBadge } from '@/components/status-badge'
+import { profileSchema } from '@/lib/validations/profile'
+import type { Database } from '@/types/database'
 
 
 export default function AccountPage() {
   const router = useRouter()
-  const { user, logout, isLoading } = useAuth()
+  const { user, logout, isLoading, refreshUser } = useAuth()
   const { wishlistItems } = useCart()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+
+  type OrderItem = Database['public']['Tables']['order_items']['Row']
+  type OrderWithItems = Database['public']['Tables']['orders']['Row'] & { order_items: OrderItem[] }
 
   const [isSaving, setIsSaving] = useState(false)
   const [ordersLoading, setOrdersLoading] = useState(true)
-  const [orders, setOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   const [profile, setProfile] = useState({
@@ -35,6 +40,12 @@ export default function AccountPage() {
     lastName: '',
     email: '',
     phone: '',
+    addressStreet: '',
+    addressApartment: '',
+    addressCity: '',
+    addressProvince: 'Quebec',
+    addressPostalCode: '',
+    addressCountry: 'Canada',
   })
 
 
@@ -45,32 +56,39 @@ export default function AccountPage() {
         lastName: user.profile?.last_name || '',
         email: user.email || '',
         phone: user.profile?.phone || '',
+        addressStreet: user.profile?.address_street || '',
+        addressApartment: user.profile?.address_apartment || '',
+        addressCity: user.profile?.address_city || '',
+        addressProvince: user.profile?.address_province || 'Quebec',
+        addressPostalCode: user.profile?.address_postal_code || '',
+        addressCountry: user.profile?.address_country || 'Canada',
       })
-      fetchOrders() 
     }
+
+    const loadOrders = async () => {
+      if (!user?.id) {
+        setOrdersLoading(false)
+        return
+      }
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*, order_items (*)')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+
+        if (error) throw error
+        setOrders(data || [])
+      } catch (err) {
+        console.error('Erreur chargement commandes:', err)
+      } finally {
+        setOrdersLoading(false)
+      }
+    }
+
+    loadOrders()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
-
- 
-  const fetchOrders = async () => {
-    if (!user?.id) return
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items (*)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setOrders(data || [])
-    } catch (error) {
-      console.error('Erreur chargement commandes:', error)
-    } finally {
-      setOrdersLoading(false)
-    }
-  }
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -84,6 +102,25 @@ export default function AccountPage() {
 
   const handleSaveProfile = async () => {
     if (!user?.id) return
+
+    const validation = profileSchema.safeParse({
+      first_name: profile.firstName,
+      last_name: profile.lastName,
+      phone: profile.phone,
+      address_street: profile.addressStreet,
+      address_apartment: profile.addressApartment,
+      address_city: profile.addressCity,
+      address_province: profile.addressProvince,
+      address_postal_code: profile.addressPostalCode,
+      address_country: profile.addressCountry,
+    })
+
+    if (!validation.success) {
+      const firstError = validation.error.issues[0]
+      setMessage({ type: 'error', text: firstError.message })
+      return
+    }
+
     setIsSaving(true)
     setMessage(null)
 
@@ -93,11 +130,18 @@ export default function AccountPage() {
         .update({
           first_name: profile.firstName,
           last_name: profile.lastName,
-          phone: profile.phone,
+          phone: profile.phone || null,
+          address_street: profile.addressStreet || null,
+          address_apartment: profile.addressApartment || null,
+          address_city: profile.addressCity || null,
+          address_province: profile.addressProvince || null,
+          address_postal_code: profile.addressPostalCode || null,
+          address_country: profile.addressCountry || null,
         })
         .eq('id', user.id)
 
       if (error) throw error
+      await refreshUser()
       setMessage({ type: 'success', text: 'Profil mis à jour avec succès !' })
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Erreur lors de la mise à jour.' })
@@ -155,11 +199,10 @@ export default function AccountPage() {
         )}
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-muted/50 p-1">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-2 bg-muted/50 p-1">
             <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" /> Profil</TabsTrigger>
             <TabsTrigger value="orders" className="gap-2"><Package className="h-4 w-4" /> Commandes</TabsTrigger>
             <TabsTrigger value="wishlist" className="gap-2"><Heart className="h-4 w-4" /> Souhaits</TabsTrigger>
-            <TabsTrigger value="addresses" className="gap-2"><MapPin className="h-4 w-4" /> Adresse</TabsTrigger>
             <TabsTrigger value="support" className="gap-2"><Headphones className="h-4 w-4" /> Support</TabsTrigger>
           </TabsList>
 
@@ -188,6 +231,37 @@ export default function AccountPage() {
                 <div className="space-y-2">
                   <Label>Téléphone</Label>
                   <Input value={profile.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="+1 (514) 123-4567" disabled={isSaving} />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Adresse de livraison</CardTitle>
+                <CardDescription>Utilisée pour pré-remplir le formulaire de commande</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Adresse</Label>
+                  <Input value={profile.addressStreet} onChange={(e) => updateField('addressStreet', e.target.value)} placeholder="123 rue Principale" disabled={isSaving} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Appartement, suite, etc. (optionnel)</Label>
+                  <Input value={profile.addressApartment} onChange={(e) => updateField('addressApartment', e.target.value)} placeholder="Apt 4B" disabled={isSaving} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Ville</Label>
+                    <Input value={profile.addressCity} onChange={(e) => updateField('addressCity', e.target.value)} placeholder="Montréal" disabled={isSaving} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Province</Label>
+                    <Input value={profile.addressProvince} onChange={(e) => updateField('addressProvince', e.target.value)} placeholder="Quebec" disabled={isSaving} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Code postal</Label>
+                    <Input value={profile.addressPostalCode} onChange={(e) => updateField('addressPostalCode', e.target.value.toUpperCase())} placeholder="H2X 1Y4" disabled={isSaving} />
+                  </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
                   <Button onClick={handleSaveProfile} disabled={isSaving}>
@@ -313,21 +387,30 @@ export default function AccountPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="addresses">
+          <TabsContent value="support">
             <Card>
-              <CardHeader><CardTitle>Adresse de livraison</CardTitle></CardHeader>
-              <CardContent>
-                {user.profile?.address ? (
-                  <div className="p-4 border-2 border-primary/10 rounded-xl bg-primary/5 flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-primary">Adresse principale</p>
-                      <p className="text-sm mt-1">{user.profile.address}</p>
-                    </div>
-                    <Badge>Par défaut</Badge>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground italic text-center py-8">Aucune adresse enregistrée.</p>
-                )}
+              <CardHeader>
+                <CardTitle>Support et SAV</CardTitle>
+                <CardDescription>Consultez vos demandes ou ouvrez un nouveau dossier</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button asChild className="flex-1">
+                    <Link href="/compte/sav">
+                      <Headphones className="h-4 w-4 mr-2" />
+                      Voir mes demandes
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild className="flex-1">
+                    <Link href="/compte/sav/nouveau">
+                      <ShoppingBag className="h-4 w-4 mr-2" />
+                      Nouvelle demande SAV
+                    </Link>
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground text-center pt-2">
+                  Une question sur une commande ou un produit ? Notre équipe vous répond dans les 24h.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>

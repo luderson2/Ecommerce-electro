@@ -9,9 +9,12 @@ type Role = "client" | "admin" | "employee";
 
 type ProfilLigne = {
   id: string;
-  full_name: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
   phone: string | null;
-  address: string | null;
+  address_street: string | null;
+  address_city: string | null;
   role: Role;
   created_at: string;
   orders: {
@@ -60,19 +63,17 @@ export default async function AdminClientsPage({
 
   let query = supabase
     .from("profiles")
-    .select("id, full_name, phone, address, role, created_at, orders(id, total_amount, status)")
+    .select("id, first_name, last_name, email, phone, address_street, address_city, role, created_at, orders(id, total_amount, status)")
     .order("created_at", { ascending: false });
 
   if (filtreRole) {
     query = query.eq("role", filtreRole);
   }
 
-  const { data: profils, error } = await query as unknown as {
-    data: ProfilLigne[] | null;
-    error: { message: string } | null;
-  };
+  const { data: profils, error } = await query.returns<ProfilLigne[]>();
 
   const roleActif = role ?? "tous";
+  const nbClients = profils?.filter((p) => p.role === "client").length ?? 0;
 
   return (
     <div>
@@ -87,7 +88,7 @@ export default async function AdminClientsPage({
         </div>
         <div className="flex items-center gap-2 bg-surface border border-border rounded-lg px-4 py-2.5 text-sm text-muted-foreground">
           <Users size={15} className="shrink-0" />
-          <span>{profils?.filter((p) => p.role === "client").length ?? 0} client{(profils?.filter((p) => p.role === "client").length ?? 0) !== 1 ? "s" : ""}</span>
+          <span>{nbClients} client{nbClients !== 1 ? "s" : ""}</span>
         </div>
       </div>
 
@@ -116,8 +117,8 @@ export default async function AdminClientsPage({
       )}
 
       {/* Tableau */}
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[800px]">
           <thead className="bg-surface border-b border-border">
             <tr>
               <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -159,10 +160,12 @@ export default async function AdminClientsPage({
                   <tr key={profil.id} className="hover:bg-surface/60 transition-colors">
                     {/* Nom */}
                     <td className="px-5 py-3">
-                      <p className="font-medium text-foreground">{profil.full_name}</p>
-                      {profil.address && (
+                      <p className="font-medium text-foreground">
+                        {[profil.first_name, profil.last_name].filter(Boolean).join(" ") || profil.email || "—"}
+                      </p>
+                      {profil.address_street && (
                         <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[200px]">
-                          {profil.address}
+                          {[profil.address_street, profil.address_city].filter(Boolean).join(', ')}
                         </p>
                       )}
                     </td>
@@ -204,7 +207,7 @@ export default async function AdminClientsPage({
                     <td className="px-5 py-3 text-right">
                       {nbCommandes > 0 && (
                         <Link
-                          href={`/admin/commandes`}
+                          href={`/admin/commandes?user_id=${profil.id}`}
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
                         >
                           <ShoppingCart size={12} />

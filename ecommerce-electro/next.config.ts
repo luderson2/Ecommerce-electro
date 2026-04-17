@@ -1,14 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    staleTimes: {
-      dynamic: 0,
-    },
-  },
   images: {
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'none'; style-src 'unsafe-inline'",
     remotePatterns: [
       {
         protocol: "https",

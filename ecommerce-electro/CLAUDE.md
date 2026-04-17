@@ -68,6 +68,43 @@ types/
 - `lib/supabase/server.ts` — pour Server Components et Server Actions
 - `lib/supabase/client.ts` — pour Client Components
 
+## Règle anti-boucle infinie (Client Components)
+
+**Toujours** memoïser le client Supabase dans les composants React :
+```ts
+// ✅ Correct
+const supabase = useMemo(() => createClient(), [])
+
+// ❌ Interdit — crée une nouvelle instance à chaque render,
+//    ce qui rend les useCallback/useEffect dépendants de `supabase` instables
+//    → boucle infinie de rechargement
+const supabase = createClient()
+```
+
+**Toujours** garantir que les états de chargement se réinitialisent avec `try/catch/finally` :
+```ts
+// ✅ Correct
+const fetchData = useCallback(async () => {
+  if (!user?.id) {
+    setIsLoading(false)  // ← reset même sur early return
+    return
+  }
+  try {
+    // ...fetch...
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setIsLoading(false)  // ← toujours appelé
+  }
+}, [user, supabase])
+
+// ❌ Interdit — early return sans reset → spinner infini
+const fetchData = async () => {
+  if (!user?.id) return  // ← isLoading reste true pour toujours
+  try { ... } finally { setIsLoading(false) }
+}
+```
+
 ## Fonction Supabase RPC
 - `get_user_email(user_id)` — retourne l'email d'un utilisateur (SECURITY DEFINER)
 

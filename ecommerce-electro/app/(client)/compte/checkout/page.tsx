@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CreditCard, Truck, CheckCircle, MapPin, DollarSign, Lock, ShoppingBag, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,10 +16,11 @@ import Footer from '@/components/layout/Footer'
 import { SectionTitle } from '@/components/section-title'
 import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
-import { createCheckoutSession } from '@/lib/actions/stripe'
+import { createCheckoutSession, cancelPendingOrder, type DeliveryMode } from '@/lib/actions/stripe'
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const { cartItems, cartTotal } = useCart()
 
@@ -28,7 +29,39 @@ export default function CheckoutPage() {
   const [postalCodeValid, setPostalCodeValid] = useState<boolean | null>(null)
   const [selectedDelivery, setSelectedDelivery] = useState('standard')
   const [tipAmount, setTipAmount] = useState<number>(0)
-  const [postalCode, setPostalCode] = useState('')
+  const [address, setAddress] = useState({
+    street: '',
+    apartment: '',
+    city: '',
+    province: 'Quebec',
+    postalCode: '',
+    country: 'Canada',
+  })
+  const addressInitialized = useRef(false)
+
+  // Pré-remplir l'adresse depuis le profil une seule fois
+  useEffect(() => {
+    if (user?.profile && !addressInitialized.current) {
+      addressInitialized.current = true
+      setAddress({
+        street: user.profile.address_street ?? '',
+        apartment: user.profile.address_apartment ?? '',
+        city: user.profile.address_city ?? '',
+        province: user.profile.address_province ?? 'Quebec',
+        postalCode: user.profile.address_postal_code ?? '',
+        country: user.profile.address_country ?? 'Canada',
+      })
+    }
+  }, [user])
+
+  // Annuler la commande si l'utilisateur revient de Stripe sans payer
+  useEffect(() => {
+    const canceled = searchParams.get('canceled')
+    const orderId  = searchParams.get('order_id')
+    if (canceled === 'true' && orderId) {
+      cancelPendingOrder(orderId).catch(console.error)
+    }
+  }, [searchParams])
 
   const shipping = cartTotal >= 500 ? 0 : selectedDelivery === 'express' ? 79.99 : selectedDelivery === 'scheduled' ? 59.99 : 25.00
   const tps = cartTotal * 0.05
@@ -37,17 +70,21 @@ export default function CheckoutPage() {
   const total = cartTotal + shipping + tax + tipAmount
 
   const checkPostalCode = () => {
-    const code = postalCode.toUpperCase().trim()
+    const code = address.postalCode.toUpperCase().trim()
     setPostalCodeValid(code.startsWith('H') || code.startsWith('J') || code.startsWith('G') || code.startsWith('K'))
   }
 
   const handleProceedToPayment = async () => {
     if (!user) {
-      router.push('/login')
+      router.push('/connexion')
       return
     }
     if (cartItems.length === 0) {
       setError('Votre panier est vide.')
+      return
+    }
+    if (!address.street.trim() || !address.city.trim() || !address.province.trim() || !address.postalCode.trim() || !address.country.trim()) {
+      setError("Veuillez remplir tous les champs d'adresse de livraison obligatoires.")
       return
     }
 
@@ -56,7 +93,28 @@ export default function CheckoutPage() {
 
     try {
       const origin = window.location.origin
-      const { url } = await createCheckoutSession(cartItems, origin)
+      // On envoie le mode de livraison (pas le coût calculé côté client)
+      // Les prix sont recalculés serveur-side depuis la DB
+      const safeCartItems = cartItems.map(({ product_id, product_name, product_image, quantity }) => ({
+        product_id,
+        product_name,
+        product_image: product_image ?? null,
+        quantity,
+      }))
+      const { url } = await createCheckoutSession(
+        safeCartItems,
+        origin,
+        selectedDelivery as DeliveryMode,
+        tipAmount,
+        {
+          street:     address.street.trim(),
+          apartment:  address.apartment.trim() || null,
+          city:       address.city.trim(),
+          province:   address.province.trim(),
+          postalCode: address.postalCode.trim(),
+          country:    address.country.trim(),
+        }
+      )
       window.location.href = url
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de la creation de la session de paiement.')
@@ -72,9 +130,9 @@ export default function CheckoutPage() {
         <main className="container mx-auto px-4 py-16 text-center">
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-2xl font-bold mb-2">Connexion requise</h2>
-          <p className="text-muted-foreground mb-6">Vous devez etre connecte pour passer une commande.</p>
+          <p className="text-muted-foreground mb-6">Vous devez être connecté pour passer une commande.</p>
           <Button asChild>
-            <Link href="/login">Se connecter</Link>
+            <Link href="/connexion">Se connecter</Link>
           </Button>
         </main>
         <Footer />
@@ -82,7 +140,6 @@ export default function CheckoutPage() {
     )
   }
 
-  // Redirect if cart is empty
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background">
@@ -90,9 +147,9 @@ export default function CheckoutPage() {
         <main className="container mx-auto px-4 py-16 text-center">
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-2xl font-bold mb-2">Votre panier est vide</h2>
-          <p className="text-muted-foreground mb-6">Ajoutez des produits avant de passer a la caisse.</p>
+          <p className="text-muted-foreground mb-6">Ajoutez des produits avant de passer à la caisse.</p>
           <Button asChild>
-            <Link href="/shop">Magasiner</Link>
+            <Link href="/catalogue">Magasiner</Link>
           </Button>
         </main>
         <Footer />
@@ -126,12 +183,12 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Prenom</Label>
-                    <Input id="firstName" placeholder="Jean"  readOnly className="bg-muted" />
+                    <Label htmlFor="firstName">Prénom</Label>
+                    <Input id="firstName" defaultValue={user.profile?.first_name ?? ""} readOnly className="bg-muted" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Nom</Label>
-                    <Input id="lastName" placeholder="Tremblay"  readOnly className="bg-muted" />
+                    <Input id="lastName" defaultValue={user.profile?.last_name ?? ""} readOnly className="bg-muted" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -151,30 +208,50 @@ export default function CheckoutPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="address">Adresse</Label>
-                  <Input id="address" placeholder="123 rue Principale" />
+                  <Label htmlFor="address">Adresse *</Label>
+                  <Input
+                    id="address"
+                    placeholder="123 rue Principale"
+                    value={address.street}
+                    onChange={(e) => setAddress(a => ({ ...a, street: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="apartment">Appartement, suite, etc. (optionnel)</Label>
-                  <Input id="apartment" placeholder="Apt 4B" />
+                  <Input
+                    id="apartment"
+                    placeholder="Apt 4B"
+                    value={address.apartment}
+                    onChange={(e) => setAddress(a => ({ ...a, apartment: e.target.value }))}
+                  />
                 </div>
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="city">Ville</Label>
-                    <Input id="city" placeholder="Montreal" />
+                    <Label htmlFor="city">Ville *</Label>
+                    <Input
+                      id="city"
+                      placeholder="Montreal"
+                      value={address.city}
+                      onChange={(e) => setAddress(a => ({ ...a, city: e.target.value }))}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="province">Province</Label>
-                    <Input id="province" placeholder="Quebec" defaultValue="Quebec" />
+                    <Label htmlFor="province">Province *</Label>
+                    <Input
+                      id="province"
+                      placeholder="Quebec"
+                      value={address.province}
+                      onChange={(e) => setAddress(a => ({ ...a, province: e.target.value }))}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="postal">Code postal</Label>
+                    <Label htmlFor="postal">Code postal *</Label>
                     <div className="flex gap-2">
                       <Input
                         id="postal"
                         placeholder="H1A 1A1"
-                        value={postalCode}
-                        onChange={(e) => { setPostalCode(e.target.value); setPostalCodeValid(null) }}
+                        value={address.postalCode}
+                        onChange={(e) => { setAddress(a => ({ ...a, postalCode: e.target.value })); setPostalCodeValid(null) }}
                       />
                       <Button variant="outline" size="icon" onClick={checkPostalCode} type="button">
                         <MapPin className="h-4 w-4" />

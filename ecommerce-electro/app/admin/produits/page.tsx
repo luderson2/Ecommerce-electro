@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrix } from "@/lib/utils";
 
@@ -19,13 +19,11 @@ type ProduitLigne = {
 
 export default async function AdminProduitsPage() {
   const supabase = await createClient();
-  const { data: products, error } = (await supabase
+  const { data: products, error } = await supabase
     .from("products")
     .select("id, name, slug, price, brand, stock, is_active, product_images(url, sort_order)")
-    .order("created_at", { ascending: false })) as unknown as {
-    data: ProduitLigne[] | null;
-    error: { message: string } | null;
-  };
+    .order("created_at", { ascending: false })
+    .returns<ProduitLigne[]>();
 
   return (
     <div>
@@ -54,8 +52,8 @@ export default async function AdminProduitsPage() {
       )}
 
       {/* Tableau */}
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr className="border-b border-border bg-surface">
               <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-16">
@@ -111,6 +109,7 @@ export default async function AdminProduitsPage() {
                             width={48}
                             height={48}
                             className="object-cover"
+                            unoptimized={imageUrl.includes("placehold.co")}
                           />
                         ) : (
                           <span className="text-muted-foreground text-xs">—</span>
@@ -171,9 +170,10 @@ export default async function AdminProduitsPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/admin/produits/${product.id}`}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-surface border border-border text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all"
                       >
-                        Modifier →
+                        <Pencil size={12} />
+                        Modifier
                       </Link>
                     </td>
                   </tr>

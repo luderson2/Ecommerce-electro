@@ -1,33 +1,13 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, MessageSquare, User, ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { formatDateLong } from "@/lib/utils";
+import { SAV_BADGE, SAV_LABEL } from "@/lib/constants/statuts";
 import type { SavStatus } from "@/types";
 import StatutSavForm from "./StatutSavForm";
-
-const BADGE: Record<SavStatus, string> = {
-  ouvert:   "bg-yellow-100 text-yellow-800",
-  en_cours: "bg-blue-100 text-blue-800",
-  resolu:   "bg-green-100 text-green-800",
-  ferme:    "bg-gray-100 text-gray-600",
-};
-
-const LABEL: Record<SavStatus, string> = {
-  ouvert:   "Ouvert",
-  en_cours: "En cours",
-  resolu:   "Résolu",
-  ferme:    "Fermé",
-};
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-CA", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 type DemandeDetail = {
   id: string;
@@ -38,9 +18,13 @@ type DemandeDetail = {
   status: SavStatus;
   created_at: string;
   profiles: {
-    full_name: string;
+    first_name: string | null;
+    last_name: string | null;
     phone: string | null;
-    address: string | null;
+    address_street: string | null;
+    address_city: string | null;
+    address_province: string | null;
+    address_postal_code: string | null;
   } | null;
 };
 
@@ -52,13 +36,14 @@ export default async function AdminSavDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: demande } = (await supabase
+  const { data: demandeRaw } = await supabase
     .from("service_requests")
-    .select("id, user_id, order_id, subject, description, status, created_at, profiles(full_name, phone, address)")
+    .select("id, user_id, order_id, subject, description, status, created_at, profiles(first_name, last_name, phone, address_street, address_city, address_province, address_postal_code)")
     .eq("id", id)
-    .single()) as unknown as { data: DemandeDetail | null };
+    .single();
 
-  if (!demande) notFound();
+  if (!demandeRaw) notFound();
+  const demande = demandeRaw as unknown as DemandeDetail;
 
   const { data: emailData } = await supabase.rpc("get_user_email", { user_id: demande.user_id });
   const email = emailData as string | null;
@@ -81,12 +66,12 @@ export default async function AdminSavDetailPage({
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-foreground">{demande.subject}</h1>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${BADGE[demande.status]}`}>
-              {LABEL[demande.status]}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${SAV_BADGE[demande.status]}`}>
+              {SAV_LABEL[demande.status]}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Soumise le {formatDate(demande.created_at)}
+            Soumise le {formatDateLong(demande.created_at, true)}
           </p>
         </div>
       </div>
@@ -151,7 +136,7 @@ export default async function AdminSavDetailPage({
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Nom complet</p>
                 <p className="font-medium text-foreground">
-                  {demande.profiles?.full_name ?? "—"}
+                  {[demande.profiles?.first_name, demande.profiles?.last_name].filter(Boolean).join(" ") || "—"}
                 </p>
               </div>
               <div>

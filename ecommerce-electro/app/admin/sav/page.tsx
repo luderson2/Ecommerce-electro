@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { formatDate } from "@/lib/utils";
+import { SAV_STATUTS, SAV_BADGE, SAV_LABEL } from "@/lib/constants/statuts";
 import type { SavStatus } from "@/types";
 
 type DemandeLigne = {
@@ -10,38 +12,8 @@ type DemandeLigne = {
   status: SavStatus;
   created_at: string;
   order_id: string | null;
-  profiles: { full_name: string } | null;
+  profiles: { first_name: string | null; last_name: string | null } | null;
 };
-
-const STATUTS: { value: SavStatus | "tous"; label: string }[] = [
-  { value: "tous",     label: "Toutes" },
-  { value: "ouvert",   label: "Ouvertes" },
-  { value: "en_cours", label: "En cours" },
-  { value: "resolu",   label: "Résolues" },
-  { value: "ferme",    label: "Fermées" },
-];
-
-const BADGE: Record<SavStatus, string> = {
-  ouvert:   "bg-yellow-100 text-yellow-800",
-  en_cours: "bg-blue-100 text-blue-800",
-  resolu:   "bg-green-100 text-green-800",
-  ferme:    "bg-gray-100 text-gray-600",
-};
-
-const LABEL: Record<SavStatus, string> = {
-  ouvert:   "Ouvert",
-  en_cours: "En cours",
-  resolu:   "Résolu",
-  ferme:    "Fermé",
-};
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default async function AdminSavPage({
   searchParams,
@@ -55,17 +27,14 @@ export default async function AdminSavPage({
 
   let query = supabase
     .from("service_requests")
-    .select("id, subject, status, created_at, order_id, profiles(full_name)")
+    .select("id, subject, status, created_at, order_id, profiles(first_name, last_name)")
     .order("created_at", { ascending: false });
 
   if (filtreStatut) {
     query = query.eq("status", filtreStatut);
   }
 
-  const { data: demandes, error } = await query as unknown as {
-    data: DemandeLigne[] | null;
-    error: { message: string } | null;
-  };
+  const { data: demandes, error } = await query.returns<DemandeLigne[]>();
 
   const statutActif = statut ?? "tous";
 
@@ -76,13 +45,13 @@ export default async function AdminSavPage({
         <h1 className="text-2xl font-bold text-foreground">Service après-vente</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {demandes?.length ?? 0} demande{(demandes?.length ?? 0) !== 1 ? "s" : ""}
-          {filtreStatut ? ` · filtrées par "${LABEL[filtreStatut]}"` : " au total"}
+          {filtreStatut ? ` · filtrées par "${SAV_LABEL[filtreStatut]}"` : " au total"}
         </p>
       </div>
 
       {/* Filtres par statut */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {STATUTS.map((s) => (
+        {SAV_STATUTS.map((s) => (
           <Link
             key={s.value}
             href={s.value === "tous" ? "/admin/sav" : `/admin/sav?statut=${s.value}`}
@@ -105,8 +74,8 @@ export default async function AdminSavPage({
       )}
 
       {/* Tableau */}
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[650px]">
           <thead className="bg-surface border-b border-border">
             <tr>
               <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -149,7 +118,7 @@ export default async function AdminSavPage({
                   {/* Client */}
                   <td className="p-0">
                     <Link href={`/admin/sav/${demande.id}`} className="flex items-center px-5 py-3 text-muted-foreground">
-                      {demande.profiles?.full_name ?? <span className="italic">Inconnu</span>}
+                      {[demande.profiles?.first_name, demande.profiles?.last_name].filter(Boolean).join(" ") || <span className="italic">Inconnu</span>}
                     </Link>
                   </td>
 
@@ -176,8 +145,8 @@ export default async function AdminSavPage({
                   {/* Statut */}
                   <td className="p-0">
                     <Link href={`/admin/sav/${demande.id}`} className="flex items-center px-5 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${BADGE[demande.status]}`}>
-                        {LABEL[demande.status]}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${SAV_BADGE[demande.status]}`}>
+                        {SAV_LABEL[demande.status]}
                       </span>
                     </Link>
                   </td>

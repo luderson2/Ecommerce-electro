@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -7,6 +8,7 @@ interface StatCardProps {
   sous_label?: string;
   icon: LucideIcon;
   variante?: "default" | "warning" | "success" | "danger";
+  href?: string;
 }
 
 const varianteStyles = {
@@ -34,11 +36,16 @@ export default function StatCard({
   sous_label,
   icon: Icon,
   variante = "default",
+  href,
 }: StatCardProps) {
   const styles = varianteStyles[variante];
 
-  return (
-    <div className={cn("bg-white rounded-lg border p-5 flex items-start gap-4", styles.card)}>
+  const content = (
+    <div className={cn(
+      "bg-white rounded-lg border p-5 flex items-start gap-4 transition-all",
+      styles.card,
+      href && "hover:shadow-sm hover:-translate-y-px cursor-pointer"
+    )}>
       <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", styles.icon)}>
         <Icon size={20} />
       </div>
@@ -51,4 +58,10 @@ export default function StatCard({
       </div>
     </div>
   );
+
+  if (href) {
+    return <Link href={href}>{content}</Link>;
+  }
+
+  return content;
 }

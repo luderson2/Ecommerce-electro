@@ -56,10 +56,10 @@ export default function WishlistPage() {
             </p>
             <div className="flex gap-4 justify-center">
               <Button asChild>
-                <Link href="/login">Connexion</Link>
+                <Link href="/connexion">Connexion</Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/register">Inscription</Link>
+                <Link href="/inscription">Inscription</Link>
               </Button>
             </div>
           </div>

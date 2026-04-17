@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -8,6 +9,37 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPrix } from "@/lib/utils";
 import ProductCard, { type ProduitCarte } from "@/components/produits/ProductCard";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+
+  const { data: produit } = await supabase
+    .from("products")
+    .select("name, description, brand, product_images(url, sort_order)")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .single();
+
+  if (!produit) return { title: "Produit introuvable" };
+
+  const image = [...(produit.product_images ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order)[0]?.url;
+
+  return {
+    title: `${produit.name} — ${produit.brand}`,
+    description: produit.description ?? `Découvrez le ${produit.name} de ${produit.brand} sur ElectroShop.`,
+    openGraph: {
+      title: `${produit.name} — ${produit.brand}`,
+      description: produit.description ?? `Découvrez le ${produit.name} de ${produit.brand}.`,
+      ...(image ? { images: [{ url: image }] } : {}),
+    },
+  };
+}
 
 export default async function ProduitDetailPage({
   params,
@@ -98,6 +130,7 @@ export default async function ProduitDetailPage({
                 src={images[0].url}
                 alt={produit.name}
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-contain p-8"
                 priority
               />
@@ -119,7 +152,7 @@ export default async function ProduitDetailPage({
                   key={i}
                   className="relative h-20 w-20 flex-shrink-0 rounded-md border border-border overflow-hidden bg-surface"
                 >
-                  <Image src={img.url} alt={`${produit.name} vue ${i + 1}`} fill className="object-contain p-2" />
+                  <Image src={img.url} alt={`${produit.name} vue ${i + 1}`} fill sizes="80px" className="object-contain p-2" />
                 </div>
               ))}
             </div>
