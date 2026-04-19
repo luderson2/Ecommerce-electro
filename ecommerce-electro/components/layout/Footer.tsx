@@ -51,6 +51,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-2 text-sm text-white/75">
               {[
                 { href: "/compte/sav", label: "Service après-vente" },
+                { href: "/reparation", label: "Demande de réparation" },
                 { href: "/compte/commandes", label: "Suivre une commande" },
                 { href: "/comparateur", label: "Comparer des produits" },
                 { href: "/livraison-retours", label: "Livraison et retours" },

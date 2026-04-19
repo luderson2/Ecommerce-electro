@@ -107,6 +107,27 @@ export interface ServiceRequest {
 }
 
 // ─── Wishlist ─────────────────────────────────────────────────────────────────
+export type ReparationStatus =
+  | "nouveau"
+  | "contacte"
+  | "en_cours"
+  | "termine"
+  | "annule";
+
+export interface DemandeReparation {
+  id: string;
+  nom: string;
+  telephone: string;
+  appareil: string;
+  description: string;
+  statut: ReparationStatus;
+  ip_hash?: string;
+  user_agent?: string;
+  notes_admin?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface WishlistItem {
   id: string;
   user_id: string;

@@ -183,6 +183,32 @@ export type Database = {
           }
         ];
       };
+      demandes_reparation: {
+        Row: {
+          id: string;
+          nom: string;
+          telephone: string;
+          appareil: string;
+          description: string;
+          statut: "nouveau" | "contacte" | "en_cours" | "termine" | "annule";
+          ip_hash: string | null;
+          user_agent: string | null;
+          notes_admin: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["demandes_reparation"]["Row"],
+          "id" | "created_at" | "updated_at" | "statut" | "ip_hash" | "user_agent" | "notes_admin"
+        > & {
+          statut?: Database["public"]["Tables"]["demandes_reparation"]["Row"]["statut"];
+          ip_hash?: string | null;
+          user_agent?: string | null;
+          notes_admin?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["demandes_reparation"]["Insert"]>;
+        Relationships: [];
+      };
       cart_items: {
         Row: {
           id: string;

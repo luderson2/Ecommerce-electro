@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Truck,
   Headphones,
+  Wrench,
   Users,
   ExternalLink,
   ChevronRight,
@@ -51,6 +52,7 @@ const navGroups: NavGroup[] = [
       { href: "/admin/commandes", label: "Commandes", icon: ShoppingCart },
       { href: "/admin/livraisons", label: "Livraisons", icon: Truck },
       { href: "/admin/sav", label: "SAV", icon: Headphones },
+      { href: "/admin/reparations", label: "Réparations", icon: Wrench },
     ],
   },
   {

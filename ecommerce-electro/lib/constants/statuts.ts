@@ -77,3 +77,30 @@ export const SAV_LABEL: Record<SavStatus, string> = {
   resolu:   "Résolu",
   ferme:    "Fermé",
 };
+
+type ReparationStatus = "nouveau" | "contacte" | "en_cours" | "termine" | "annule";
+
+export const REPARATION_STATUTS: { value: ReparationStatus | "tous"; label: string }[] = [
+  { value: "tous",     label: "Toutes" },
+  { value: "nouveau",  label: "Nouvelles" },
+  { value: "contacte", label: "Contactées" },
+  { value: "en_cours", label: "En cours" },
+  { value: "termine",  label: "Terminées" },
+  { value: "annule",   label: "Annulées" },
+];
+
+export const REPARATION_BADGE: Record<ReparationStatus, string> = {
+  nouveau:  "bg-yellow-100 text-yellow-800",
+  contacte: "bg-blue-100 text-blue-800",
+  en_cours: "bg-purple-100 text-purple-800",
+  termine:  "bg-green-100 text-green-800",
+  annule:   "bg-gray-100 text-gray-600",
+};
+
+export const REPARATION_LABEL: Record<ReparationStatus, string> = {
+  nouveau:  "Nouveau",
+  contacte: "Contacté",
+  en_cours: "En cours",
+  termine:  "Terminé",
+  annule:   "Annulé",
+};
