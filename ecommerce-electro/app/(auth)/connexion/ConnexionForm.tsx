@@ -1,29 +1,70 @@
-﻿'use client'
+'use client'
 
-import { useActionState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { FormEvent, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { seConnecter } from '@/lib/actions/auth'
-import { useState } from 'react'
+import { useAuth } from '@/contexts/auth-context'
+
+const DESTINATIONS: Record<string, string> = {
+  admin: '/admin',
+  employee: '/admin',
+  client: '/',
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error('timeout')), ms)
+    }),
+  ])
+}
 
 export default function ConnexionForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
-  const next = searchParams.get('next') || ''
+  const next = searchParams.get('next') || searchParams.get('redirect') || ''
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
-  const [state, formAction, isPending] = useActionState(seConnecter, null)
+  const [error, setError] = useState('')
+  const [isPending, setIsPending] = useState(false)
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setError('')
+    setIsPending(true)
+
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get('email') || '')
+    const password = String(formData.get('password') || '')
+
+    try {
+      const result = await withTimeout(login(email, password), 15000)
+
+      if (!result.success) {
+        setError(result.error || 'Courriel ou mot de passe incorrect.')
+        return
+      }
+
+      const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : null
+      const destination = safeNext ?? DESTINATIONS[result.user?.profile?.role ?? ''] ?? '/'
+      router.replace(destination)
+    } catch {
+      setError('La connexion prend trop de temps. Vérifiez votre connexion et réessayez.')
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-4">
-      {/* Transmet le `next` à la server action pour la redirection */}
-      <input type="hidden" name="next" value={next} />
-
-      {state?.error && (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
         <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
-          {state.error}
+          {error}
         </div>
       )}
 
@@ -57,7 +98,7 @@ export default function ConnexionForm() {
             id="password"
             name="password"
             type={showPassword ? 'text' : 'password'}
-            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+            placeholder="Mot de passe"
             className="pl-9 pr-10"
             required
             disabled={isPending}
@@ -67,6 +108,8 @@ export default function ConnexionForm() {
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            disabled={isPending}
+            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>

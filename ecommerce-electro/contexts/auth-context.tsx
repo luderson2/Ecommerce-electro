@@ -36,7 +36,7 @@ interface RegisterData {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
@@ -44,17 +44,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function withTimeout<T>(promise: PromiseLike<T>, ms = 15000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error('La requete a expire. Veuillez reessayer.')), ms)
+    }),
+  ])
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', supabaseUser.id)
-      .single()
+    const { data: profile, error } = await withTimeout(
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single()
+    )
 
     if (error || !profile) {
       return {
@@ -75,13 +86,14 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+        const { data: { user: supabaseUser } } = await withTimeout(supabase.auth.getUser())
         if (supabaseUser) {
           const userData = await fetchUserProfile(supabaseUser)
           setUser(userData)
         }
-      } catch {
-        // Session invalide ou erreur réseau — on reste déconnecté
+      } catch (error) {
+        console.error('Erreur lors du chargement de la session:', error)
+        // Session invalide ou erreur reseau: on reste deconnecte.
       } finally {
         setIsLoading(false)
       }
@@ -92,11 +104,15 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
   
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const userData = await fetchUserProfile(session.user)
-          setUser(userData)
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null)
+        try {
+          if (event === 'SIGNED_IN' && session?.user) {
+            const userData = await fetchUserProfile(session.user)
+            setUser(userData)
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null)
+          }
+        } catch (error) {
+          console.error('Erreur lors du changement de session:', error)
         }
       }
     )
@@ -109,19 +125,21 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
   }, [])
 
   const refreshUser = async () => {
-    const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+    const { data: { user: supabaseUser } } = await withTimeout(supabase.auth.getUser())
     if (supabaseUser) {
       const userData = await fetchUserProfile(supabaseUser)
       setUser(userData)
     }
   }
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+      )
 
       if (error) {
         let errorMessage = "Courriel ou mot de passe incorrect"
@@ -134,6 +152,7 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
       if (data.user) {
         const userData = await fetchUserProfile(data.user)
         setUser(userData)
+        return { success: true, user: userData }
       }
 
       return { success: true }
@@ -144,18 +163,20 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
 
   const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/compte/profil`,
-          data: {
-            first_name: data.firstName,
-            last_name: data.lastName,
-            phone: data.phone || null,
+      const { data: authData, error } = await withTimeout(
+        supabase.auth.signUp({
+          email: data.email,
+          password: data.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/compte/profil`,
+            data: {
+              first_name: data.firstName,
+              last_name: data.lastName,
+              phone: data.phone || null,
+            },
           },
-        },
-      })
+        })
+      )
 
       if (error) {
         let errorMessage = error.message
@@ -186,7 +207,11 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
 
   
   const logout = async () => {
-    await supabase.auth.signOut()
+    try {
+      await withTimeout(supabase.auth.signOut())
+    } catch (error) {
+      console.error('Erreur lors de la deconnexion:', error)
+    }
     setUser(null)
   }
 

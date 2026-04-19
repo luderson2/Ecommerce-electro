@@ -49,7 +49,7 @@ export async function updateSession(request: NextRequest) {
 
   if (isAuthPath && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/compte";
+    url.pathname = "/compte/profil";
     return NextResponse.redirect(url);
   }
 

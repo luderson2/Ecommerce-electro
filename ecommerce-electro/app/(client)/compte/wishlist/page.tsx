@@ -16,11 +16,15 @@ export default function WishlistPage() {
   const { user } = useAuth()
   const { wishlistItems, wishlistCount, removeFromWishlist, moveToCartFromWishlist, isLoading } = useCart()
   const [processingItems, setProcessingItems] = useState<Set<string>>(new Set())
+  const [wishlistError, setWishlistError] = useState<string | null>(null)
 
   const handleRemove = async (productId: string) => {
     setProcessingItems(prev => new Set(prev).add(productId))
+    setWishlistError(null)
     try {
       await removeFromWishlist(productId)
+    } catch (error) {
+      setWishlistError(error instanceof Error ? error.message : 'Suppression du favori impossible.')
     } finally {
       setProcessingItems(prev => {
         const next = new Set(prev)
@@ -32,8 +36,11 @@ export default function WishlistPage() {
 
   const handleMoveToCart = async (productId: string) => {
     setProcessingItems(prev => new Set(prev).add(productId))
+    setWishlistError(null)
     try {
       await moveToCartFromWishlist(productId)
+    } catch (error) {
+      setWishlistError(error instanceof Error ? error.message : 'Ajout au panier impossible.')
     } finally {
       setProcessingItems(prev => {
         const next = new Set(prev)
@@ -93,6 +100,11 @@ export default function WishlistPage() {
           title="Ma liste de souhaits"
           subtitle={wishlistCount > 0 ? `${wishlistCount} article${wishlistCount !== 1 ? 's' : ''} sauvegarde${wishlistCount !== 1 ? 's' : ''}` : undefined}
         />
+        {wishlistError && (
+          <p className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+            {wishlistError}
+          </p>
+        )}
 
         {wishlistItems.length === 0 ? (
           <div className="max-w-md mx-auto text-center py-16">

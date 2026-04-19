@@ -18,6 +18,7 @@ export default function CartPage() {
   const { user } = useAuth()
   const { cartItems, cartTotal, cartCount, updateCartQuantity, removeFromCart, isLoading } = useCart()
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set())
+  const [cartError, setCartError] = useState<string | null>(null)
 
   
   const subtotal = cartTotal
@@ -30,8 +31,11 @@ export default function CartPage() {
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return
     setUpdatingItems(prev => new Set(prev).add(productId))
+    setCartError(null)
     try {
       await updateCartQuantity(productId, newQuantity)
+    } catch (error) {
+      setCartError(error instanceof Error ? error.message : 'Mise a jour du panier impossible.')
     } finally {
       setUpdatingItems(prev => {
         const next = new Set(prev)
@@ -43,8 +47,11 @@ export default function CartPage() {
 
   const handleRemove = async (productId: string) => {
     setUpdatingItems(prev => new Set(prev).add(productId))
+    setCartError(null)
     try {
       await removeFromCart(productId)
+    } catch (error) {
+      setCartError(error instanceof Error ? error.message : 'Suppression impossible.')
     } finally {
       setUpdatingItems(prev => {
         const next = new Set(prev)
@@ -95,6 +102,11 @@ export default function CartPage() {
           title="Panier d'achat"
           subtitle={cartCount > 0 ? `${cartCount} article${cartCount !== 1 ? 's' : ''} dans votre panier` : undefined}
         />
+        {cartError && (
+          <p className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+            {cartError}
+          </p>
+        )}
 
         {cartItems.length === 0 ? (
           <div className="max-w-md mx-auto text-center py-16">

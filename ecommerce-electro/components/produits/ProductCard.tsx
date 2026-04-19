@@ -38,6 +38,7 @@ export default function ProductCard({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
+  const [wishlistError, setWishlistError] = useState<string | null>(null);
 
   const imageUrl = produit.product_images
     ?.slice()
@@ -81,6 +82,7 @@ export default function ProductCard({
     }
 
     setIsTogglingWishlist(true);
+    setWishlistError(null);
     try {
       if (inWishlist) {
         await removeFromWishlist(produit.id);
@@ -93,6 +95,8 @@ export default function ProductCard({
           slug: produit.slug,
         });
       }
+    } catch (err: unknown) {
+      setWishlistError(err instanceof Error ? err.message : "Erreur lors de la mise à jour des favoris");
     } finally {
       setIsTogglingWishlist(false);
     }
@@ -103,7 +107,7 @@ export default function ProductCard({
       
      
       <div className="relative aspect-square bg-surface overflow-hidden">
-        <Link href={`/catalogue/${produit.slug}`} className="block h-full w-full" tabIndex={-1}>
+        <Link href={`/catalogue/${produit.slug}`} className="relative block h-full w-full" tabIndex={-1}>
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -209,6 +213,9 @@ export default function ProductCard({
           </Button>
           {cartError && (
             <p className="text-xs text-destructive mt-1 text-center">{cartError}</p>
+          )}
+          {wishlistError && (
+            <p className="text-xs text-destructive mt-1 text-center">{wishlistError}</p>
           )}
         </div>
       </div>

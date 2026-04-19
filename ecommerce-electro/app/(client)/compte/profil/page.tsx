@@ -92,7 +92,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/connexion?redirect=/compte')
+      router.push('/connexion?redirect=/compte/profil')
     }
   }, [user, isLoading, router])
 
@@ -168,8 +168,13 @@ export default function AccountPage() {
   }
 
   const handleLogout = async () => {
-    await logout()
-    router.push('/')
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error)
+    } finally {
+      router.replace('/')
+    }
   }
 
   if (isLoading) {

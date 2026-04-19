@@ -44,6 +44,15 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
+function withTimeout<T>(promise: PromiseLike<T>, ms = 15000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error('La requete a expire. Veuillez reessayer.')), ms)
+    }),
+  ])
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
@@ -59,11 +68,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const { data, error } = await supabase
-      .from('cart_items')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+    const { data, error } = await withTimeout(
+      supabase
+        .from('cart_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+    )
 
     if (error) {
       console.error('Erreur lors du chargement du panier:', error)
@@ -79,11 +90,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const { data, error } = await supabase
-      .from('wishlist')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+    const { data, error } = await withTimeout(
+      supabase
+        .from('wishlist')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+    )
 
     if (error) {
       console.error('Erreur lors du chargement de la liste de souhaits:', error)
@@ -97,8 +110,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
-      await Promise.all([fetchCart(), fetchWishlist()])
-      setIsLoading(false)
+      try {
+        await Promise.all([fetchCart(), fetchWishlist()])
+      } catch (error) {
+        console.error('Erreur lors du chargement du panier ou des favoris:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
     loadData()
   }, [fetchCart, fetchWishlist])
@@ -112,40 +130,48 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (existingItem) {
       await updateCartQuantity(product.id, existingItem.quantity + 1)
     } else {
-      const { error } = await supabase.from('cart_items').insert({
-        user_id: user.id,
-        product_id: product.id,
-        product_name: product.name,
-        product_price: product.price,
-        product_image: product.image || null,
-        quantity: 1,
-        updated_at: new Date().toISOString(),
-      })
+      const { data, error } = await withTimeout(
+        supabase
+          .from('cart_items')
+          .insert({
+            user_id: user.id,
+            product_id: product.id,
+            product_name: product.name,
+            product_price: product.price,
+            product_image: product.image || null,
+            quantity: 1,
+            updated_at: new Date().toISOString(),
+          })
+          .select('*')
+          .single()
+      )
 
       if (error) {
         console.error('Erreur lors de l\'ajout au panier:', error)
         throw new Error(error.message)
       }
 
-      await fetchCart()
+      setCartItems(prev => [data as CartItem, ...prev])
     }
   }
 
   const removeFromCart = async (productId: string) => {
     if (!user) return
 
-    const { error } = await supabase
-      .from('cart_items')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('product_id', productId)
+    const { error } = await withTimeout(
+      supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+    )
 
     if (error) {
       console.error('Erreur lors de la suppression du panier:', error)
-      return
+      throw new Error(error.message)
     }
 
-    await fetchCart()
+    setCartItems(prev => prev.filter(item => item.product_id !== productId))
   }
 
   const updateCartQuantity = async (productId: string, quantity: number) => {
@@ -156,31 +182,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const { error } = await supabase
-      .from('cart_items')
-      .update({ quantity, updated_at: new Date().toISOString() })
-      .eq('user_id', user.id)
-      .eq('product_id', productId)
+    const { error } = await withTimeout(
+      supabase
+        .from('cart_items')
+        .update({ quantity, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+    )
 
     if (error) {
       console.error('Erreur lors de la mise a jour de la quantite:', error)
-      return
+      throw new Error(error.message)
     }
 
-    await fetchCart()
+    setCartItems(prev =>
+      prev.map(item =>
+        item.product_id === productId ? { ...item, quantity } : item
+      )
+    )
   }
 
   const clearCart = async () => {
     if (!user) return
 
-    const { error } = await supabase
-      .from('cart_items')
-      .delete()
-      .eq('user_id', user.id)
+    const { error } = await withTimeout(
+      supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id)
+    )
 
     if (error) {
       console.error('Erreur lors du vidage du panier:', error)
-      return
+      throw new Error(error.message)
     }
 
     setCartItems([])
@@ -193,39 +227,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
    
     if (isInWishlist(product.id)) return
 
-    const { error } = await supabase.from('wishlist').insert({
-      user_id: user.id,
-      product_id: product.id,
-      product_name: product.name,
-      product_price: product.price,
-      product_image: product.image,
-        product_slug: product.slug,
-    })
+    const { data, error } = await withTimeout(
+      supabase
+        .from('wishlist')
+        .insert({
+          user_id: user.id,
+          product_id: product.id,
+          product_name: product.name,
+          product_price: product.price,
+          product_image: product.image || null,
+          product_slug: product.slug,
+        })
+        .select('*')
+        .single()
+    )
 
     if (error) {
       console.error('Erreur lors de l\'ajout a la liste de souhaits:', error)
-      return
+      throw new Error(error.message)
     }
 
-    await fetchWishlist()
+    setWishlistItems(prev => [
+      data as unknown as WishlistItem,
+      ...prev.filter(item => item.product_id !== product.id),
+    ])
   }
 
   
   const removeFromWishlist = async (productId: string) => {
     if (!user) return
 
-    const { error } = await supabase
-      .from('wishlist')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('product_id', productId)
+    const { error } = await withTimeout(
+      supabase
+        .from('wishlist')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+    )
 
     if (error) {
       console.error('Erreur lors de la suppression de la liste de souhaits:', error)
-      return
+      throw new Error(error.message)
     }
 
-    await fetchWishlist()
+    setWishlistItems(prev => prev.filter(item => item.product_id !== productId))
   }
 
  

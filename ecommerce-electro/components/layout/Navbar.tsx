@@ -26,6 +26,7 @@ export default function Navbar() {
   const { cartCount, wishlistCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navLinks = [
     { href: "/", label: "Accueil" },
@@ -35,10 +36,17 @@ export default function Navbar() {
   ];
 
   const handleLogout = async () => {
-    await logout();
-    setMobileMenuOpen(false);
-    router.push("/");
-    router.refresh();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    } finally {
+      setMobileMenuOpen(false);
+      setIsLoggingOut(false);
+      router.replace("/");
+    }
   };
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
@@ -159,9 +167,15 @@ export default function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={handleLogout}
+                    disabled={isLoggingOut}
                     className="cursor-pointer text-destructive focus:text-destructive"
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> Se déconnecter
+                    {isLoggingOut ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="mr-2 h-4 w-4" />
+                    )}
+                    Se déconnecter
                   </DropdownMenuItem>
                 </>
               ) : (

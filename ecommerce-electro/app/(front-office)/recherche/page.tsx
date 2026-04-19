@@ -46,7 +46,7 @@ export default async function RecherchePage({ searchParams }: RecherchePageProps
     <div className="container mx-auto px-4 py-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-foreground">
-          {query ? `Résultats pour â€œ${query}â€` : "Recherche"}
+          {query ? `Résultats pour "${query}"` : "Recherche"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {query
@@ -66,7 +66,7 @@ export default async function RecherchePage({ searchParams }: RecherchePageProps
         <div className="rounded-lg border border-border bg-surface px-6 py-12 text-center">
           <p className="font-medium text-foreground">Aucun produit ne correspond à votre recherche.</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Essayez avec une marque, un type dâ€™appareil ou un mot plus court.
+            Essayez avec une marque, un type d&apos;appareil ou un mot plus court.
           </p>
           <Button asChild className="mt-5">
             <Link href="/catalogue">Parcourir le catalogue</Link>
