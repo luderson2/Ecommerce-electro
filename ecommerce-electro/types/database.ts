@@ -448,7 +448,7 @@ export type Database = {
           p_stripe_session_id: string;
           p_payment_intent_id: string | null;
         };
-        Returns: void;
+        Returns: boolean;
       };
     };
     Enums: { [_ in never]: never };

@@ -50,6 +50,19 @@ export async function createCheckoutSessionForUser(
     }
   }
 
+  // Fusionner les doublons : un product_id envoyé plusieurs fois additionne les quantités
+  const mergedMap: Record<string, number> = {}
+  for (const item of cartItems) {
+    mergedMap[item.product_id] = (mergedMap[item.product_id] ?? 0) + item.quantity
+  }
+  const mergedItems: CartItem[] = Object.entries(mergedMap).map(([product_id, quantity]) => ({
+    product_id,
+    quantity,
+  }))
+
+  // Remplacer cartItems par la version dédupliquée pour tout le reste du traitement
+  cartItems = mergedItems
+
   const productIds = cartItems.map((item) => item.product_id)
 
   const { data: productsData, error: productsError } = await supabase

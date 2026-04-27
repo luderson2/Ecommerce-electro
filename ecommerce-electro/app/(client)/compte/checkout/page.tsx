@@ -91,7 +91,10 @@ function CheckoutContent() {
     }
   }, [searchParams])
 
-  const shipping = cartTotal >= 500 ? 0 : selectedDelivery === 'express' ? 79.99 : selectedDelivery === 'scheduled' ? 59.99 : 25.00
+  const shipping =
+    selectedDelivery === 'express' ? 79.99 :
+    selectedDelivery === 'scheduled' ? 59.99 :
+    cartTotal >= 500 ? 0 : 25.00
   const tps = cartTotal * 0.05
   const tvq = cartTotal * 0.09975
   const tax = tps + tvq

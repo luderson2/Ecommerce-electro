@@ -41,7 +41,10 @@ export async function seConnecter(
     .single();
 
   // Si un `next` sécurisé est fourni (chemin interne uniquement), l'utiliser
-  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : null;
+  const safeNext =
+    next.startsWith("/") && !next.startsWith("//") && !next.includes("://")
+      ? next
+      : null;
   const destination = safeNext ?? DESTINATIONS[profil?.role ?? ""] ?? "/";
   redirect(destination);
 }

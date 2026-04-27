@@ -249,7 +249,7 @@ export async function confirmerCommandePayeeDepuisSession(
       ? session.payment_intent
       : (session.payment_intent?.id ?? "");
 
-  const { error: rpcError } = await supabase.rpc("confirmer_commande_payee", {
+  const { data: wasConfirmed, error: rpcError } = await supabase.rpc("confirmer_commande_payee", {
     p_order_id: orderId,
     p_stripe_session_id: session.id,
     p_payment_intent_id: paymentIntent,
@@ -257,6 +257,11 @@ export async function confirmerCommandePayeeDepuisSession(
 
   if (rpcError) {
     throw new Error(rpcError.message || "Confirmation de commande impossible.");
+  }
+
+  // wasConfirmed === false : la commande était déjà payée (retry) — ne pas renvoyer l'email
+  if (!wasConfirmed) {
+    return { success: true, alreadyPaid: true };
   }
 
   const { data: confirmedOrder } = await supabase
