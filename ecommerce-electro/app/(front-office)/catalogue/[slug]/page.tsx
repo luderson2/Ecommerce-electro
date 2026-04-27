@@ -148,15 +148,19 @@ export default async function ProduitDetailPage({
     ],
   };
 
+  // Échapper `</` pour éviter qu'une valeur produit ne ferme prématurément la balise <script>
+  const safeJsonLd = (data: unknown) =>
+    JSON.stringify(data).replace(/</g, "\\u003c");
+
   return (
     <div className="container mx-auto px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(productJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }}
       />
 
       <nav className="text-sm text-muted-foreground mb-6" aria-label="Fil d'Ariane">

@@ -307,10 +307,20 @@ export async function confirmOrderForUser(orderId: string, sessionId: string) {
       .eq('id', user.id)
   }
 
-  await supabase
-    .from('cart_items')
-    .delete()
-    .eq('user_id', user.id)
+  // Supprimer uniquement les articles commandés, pas tout le panier
+  const { data: orderItems } = await supabase
+    .from('order_items')
+    .select('product_id')
+    .eq('order_id', orderId)
+
+  if (orderItems && orderItems.length > 0) {
+    const orderedProductIds = orderItems.map((item) => item.product_id)
+    await supabase
+      .from('cart_items')
+      .delete()
+      .eq('user_id', user.id)
+      .in('product_id', orderedProductIds)
+  }
 
   return { success: true }
 }

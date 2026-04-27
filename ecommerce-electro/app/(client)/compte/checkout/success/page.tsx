@@ -19,7 +19,9 @@ function CheckoutSuccessContent() {
   const [customerEmail, setCustomerEmail] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
-  const hasConfirmed = useRef(false)
+  // Stocker la clé session:order confirmée pour éviter les doubles appels
+  // tout en permettant une nouvelle confirmation si les params changent
+  const hasConfirmed = useRef<string | null>(null)
 
   const getJson = async <T,>(url: string): Promise<T> => {
     const response = await fetch(url)
@@ -58,11 +60,12 @@ function CheckoutSuccessContent() {
     }
 
   
-    if (hasConfirmed.current) return
+    const confirmKey = `${sessionId}:${orderId}`
+    if (hasConfirmed.current === confirmKey) return
 
     const processOrder = async () => {
       try {
-        hasConfirmed.current = true 
+        hasConfirmed.current = confirmKey
         
        
         const session = await getJson<{

@@ -139,7 +139,7 @@ export async function soumettreDemandeSAV(
   if (error) return { error: "Erreur lors de la soumission. Veuillez réessayer." };
 
   // Envoi email de confirmation au client
-  if (user.email && inserted?.id) {
+  if (user.email && inserted?.id && process.env.RESEND_API_KEY) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
     const lien = `${siteUrl}/compte/sav/${inserted.id}`;
     const resend = new Resend(process.env.RESEND_API_KEY);

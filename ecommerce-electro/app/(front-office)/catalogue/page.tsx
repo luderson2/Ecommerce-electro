@@ -67,8 +67,10 @@ async function getCatalogueData(params: SearchParams) {
   }
 
   if (params.marque) query = query.eq("brand", params.marque);
-  if (params.prix_min) query = query.gte("price", parseFloat(params.prix_min));
-  if (params.prix_max) query = query.lte("price", parseFloat(params.prix_max));
+  const prixMin = parseFloat(params.prix_min ?? "");
+  const prixMax = parseFloat(params.prix_max ?? "");
+  if (params.prix_min && isFinite(prixMin)) query = query.gte("price", prixMin);
+  if (params.prix_max && isFinite(prixMax)) query = query.lte("price", prixMax);
   if (params.en_stock === "1") query = query.gt("stock", 0);
 
   switch (params.tri) {
