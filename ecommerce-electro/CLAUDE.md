@@ -1,129 +1,132 @@
-# Contexte projet - ÉlectroMétropolitain
+# CLAUDE.md
 
-Ce projet est une boutique e-commerce d'électroménagers pour un stage étudiant. Le résultat doit rester crédible pour un commerce réel: interface claire, SEO propre, sécurité correcte sur les flux paiement/admin, et code maintenable.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Contexte projet
+
+Boutique e-commerce d'électroménagers (stage étudiant). Interface claire, SEO propre, sécurité correcte sur les flux paiement/admin, code maintenable.
 
 ## Stack
 
-- **Framework**: Next.js 16.2.4, App Router, Turbopack
+- **Framework**: Next.js 16.2.4, App Router
 - **Base de données**: Supabase PostgreSQL
 - **Auth**: Supabase Auth + `@supabase/ssr`
-- **Styling**: Tailwind CSS + shadcn/ui
+- **Styling**: Tailwind CSS v4 + shadcn/ui
 - **Validation**: Zod v4
 - **Paiement**: Stripe Checkout + webhook signé
 - **Courriels**: Resend
+- **SMS**: Twilio
 - **Langage**: TypeScript strict
 
-## Structure du projet
+## Commandes
 
-```text
-app/
-  (front-office)/          Pages publiques
-    page.tsx               Accueil + JSON-LD Store
-    catalogue/             Catalogue + fiches produits
-    categories/[slug]/     Pages catégories SEO
-    packs/[slug]/          Pages packs SEO
-    recherche/             Recherche produits noindex
-    conditions/            Page légale
-    confidentialite/       Page légale
-    livraison-retours/     Page service
-    garantie/              Page service
-  (auth)/                  Connexion / inscription
-  (client)/compte/         Profil, panier, checkout, commandes, SAV, wishlist
-  admin/                   Dashboard admin protégé
-  api/stripe/webhook/      Webhook Stripe signé
-  robots.ts                Robots SEO
-  sitemap.ts               Sitemap dynamique
-components/
-  admin/                   Formulaires et composants admin
-  layout/                  Navbar, Footer
-  packs/                   PackActions, PackCard
-  produits/                ProductCard, ProductActions, catalogue
-  ui/                      Composants shadcn/ui
-contexts/
-  auth-context.tsx         Session utilisateur client
-  cart-context.tsx         Panier / wishlist
-lib/
-  actions/                 Server Actions par domaine
-  payments/orders.ts       Confirmation sécurisée des commandes payées
-  supabase/                Clients Supabase client/server/admin
-  validations/             Schémas Zod
-supabase/migrations/       RPC et migrations SQL
-types/
-  database.ts              Types Supabase manuels
-  index.ts                 Types métier
+```bash
+npm run dev          # Démarrer en développement (webpack, pas Turbopack)
+npm run dev:clean    # Vider .next/ puis démarrer
+npm run build        # Build production
+npm run lint         # ESLint
+npx tsc --noEmit     # Vérification TypeScript sans émettre
+npm audit --omit=dev # Audit sécurité dépendances
 ```
 
-## Règles de sécurité
+Ces quatre commandes doivent passer avant toute remise ou mise en production :
+```bash
+npm run lint && npx tsc --noEmit && npm run build && npm audit --omit=dev
+```
 
-- Les actions admin doivent passer par `verifierAdmin()` dans `lib/actions/_guard.ts`.
-- Les pages admin doivent rester protégées par `app/admin/layout.tsx`.
-- Ne jamais exposer `SUPABASE_SERVICE_ROLE_KEY` côté client.
-- Le client admin Supabase dans `lib/supabase/admin.ts` doit rester serveur uniquement.
-- Les prix de checkout doivent toujours être recalculés depuis Supabase.
-- Ne jamais faire confiance aux données panier client pour le prix, le nom produit, l'image ou le total.
-- La confirmation de commande doit passer par `confirmerCommandePayeeDepuisSession()` et vérifier:
-  - `stripe_session_id`
-  - `metadata.order_id`
-  - `metadata.user_id`
-  - montant Stripe
-  - devise
-  - statut payé
-- Le webhook Stripe doit vérifier `STRIPE_WEBHOOK_SECRET`.
-- La décrémentation de stock doit rester atomique via RPC `confirmer_commande_payee`.
+## Architecture — points clés
+
+### Trois clients Supabase — ne pas confondre
+
+| Fichier | Contexte | Clé |
+|---|---|---|
+| `lib/supabase/server.ts` | Server Components, Server Actions, Route Handlers | anon |
+| `lib/supabase/client.ts` | Composants React client uniquement, via `useMemo` | anon |
+| `lib/supabase/admin.ts` | Serveur uniquement — **jamais côté client** | service_role |
+
+`createAdminClient()` est utilisé exclusivement dans `lib/payments/orders.ts` et `app/api/stripe/webhook/route.ts` pour confirmer les commandes avec des droits élevés.
+
+### Auth — double chemin
+
+- **Server Actions** (`lib/actions/auth.ts`) : utilisent `supabase.auth.getUser()` directement. C'est la source de vérité pour toutes les mutations.
+- **`contexts/auth-context.tsx`** : context React client uniquement. Expose `user`, `isLoading`, `login`, `logout`. Alimenté par un listener `onAuthStateChange`. Ne jamais l'utiliser dans des Server Components ou des Server Actions.
+
+Le middleware (`lib/supabase/middleware.ts`) protège les routes `/compte`, `/admin`, `/panier`, `/favoris`, `/checkout` et redirige vers `/connexion?next=<path>` si non authentifié.
+
+### Flux checkout complet
+
+```
+1. Client → POST /api/checkout/session
+   └─ createCheckoutSessionForUser() : déduplique product_ids, recalcule prix depuis DB,
+      crée order (status=en_attente), crée session Stripe avec metadata.order_id + metadata.user_id
+      
+2. Stripe → redirect success_url → /compte/checkout/success?session_id=...&order_id=...
+   └─ GET /api/checkout/session-status (auth + vérif ownership via orders)
+   └─ POST /api/checkout/confirm → confirmOrderForUser()
+      └─ confirmerCommandePayeeDepuisSession() → RPC confirmer_commande_payee
+         → retourne boolean (true=confirmé, false=déjà payé — évite double email)
+
+3. Stripe → webhook POST /api/stripe/webhook (chemin de secours)
+   └─ Déduplication via table stripe_webhook_events (insert + catch code 23505)
+   └─ confirmerCommandePayeeDepuisSession() (même fonction que le chemin client)
+```
+
+Le panier est vidé après confirmation : **uniquement les product_ids commandés** (pas tout le panier).
+
+### Server Actions vs Route Handlers
+
+- **Server Actions** (`lib/actions/`) : toutes les mutations UI (CRUD produits, commandes, SAV, auth). Utilisées avec `useFormState` / `useActionState`.
+- **Route Handlers** (`app/api/`) : utilisés uniquement quand un Server Action ne peut pas convenir : webhook Stripe (corps brut nécessaire), et endpoints checkout appelés en `fetch` côté client depuis la page success.
+
+### Guard admin
+
+Toutes les Server Actions admin commencent par :
+```ts
+const { supabase, erreur } = await verifierAdmin()
+if (!supabase) return { error: erreur }
+```
+`verifierAdmin()` (`lib/actions/_guard.ts`) vérifie authentification + rôle (`admin` | `employee`) et retourne directement le client Supabase pour éviter une double instanciation. Les pages admin sont aussi protégées par `app/admin/layout.tsx`.
+
+## Sécurité paiement
+
+- Les prix sont toujours recalculés depuis Supabase — ne jamais faire confiance aux données panier client (prix, nom, image, total).
+- `confirmerCommandePayeeDepuisSession()` vérifie : `stripe_session_id`, `metadata.order_id`, `metadata.user_id`, montant Stripe, devise, statut payé.
+- Le webhook vérifie `STRIPE_WEBHOOK_SECRET` via `stripe.webhooks.constructEvent`.
+- La décrémentation de stock est atomique via RPC `confirmer_commande_payee` (verrou `FOR UPDATE`).
+- `/api/checkout/session-status` requiert authentification + vérification ownership via `orders.stripe_session_id`.
 
 ## RPC Supabase
 
-- `get_user_email(user_id)`: retourne l'email d'un utilisateur.
-- `remplacer_pack_products(p_pack_id, p_product_ids)`: remplace les produits d'un pack. Fonction `SECURITY DEFINER`, `search_path` fixé, exécution limitée aux utilisateurs authentifiés avec contrôle de rôle admin/employee dans la fonction.
-- `confirmer_commande_payee(p_order_id, p_stripe_session_id, p_payment_intent_id)`: confirme une commande et décrémente le stock en transaction.
+- `get_user_email(user_id)` : retourne l'email d'un utilisateur (depuis auth.users).
+- `remplacer_pack_products(p_pack_id, p_product_ids)` : remplace les produits d'un pack. `SECURITY DEFINER`, contrôle de rôle interne.
+- `confirmer_commande_payee(p_order_id, p_stripe_session_id, p_payment_intent_id)` : confirme commande + décrémente stock. Retourne `boolean` (`true` = vient d'être confirmé, `false` = déjà payé). Utiliser ce retour pour ne pas renvoyer l'email de confirmation sur un retry.
 
-## SEO et UI/UX
+`types/database.ts` est **manuel** — mettre à jour `Database.public.Functions` lors de tout changement de signature RPC.
 
-- La marque publique est **ÉlectroMétropolitain**. Éviter l'ancien nom `ElectroShop`.
-- Les pages publiques doivent avoir des titres et descriptions cohérents.
-- Les pages produits utilisent JSON-LD `Product` et `BreadcrumbList`.
-- Les pages catégories utilisent JSON-LD `ItemList`.
-- L'accueil utilise JSON-LD `Store`.
-- Les packs publics utilisent `/packs/[slug]`, pas l'UUID.
-- Les catégories SEO utilisent `/categories/[slug]`.
-- Les pages de recherche sont `noindex`.
-- Les liens internes doivent utiliser `next/link`.
-- Les boutons icônes doivent avoir un `aria-label`.
-- Éviter les placeholders cassés ou emojis mojibake. Utiliser `public/placeholder.svg` quand aucune image produit n'existe.
-- Le bouton "Ajouter au panier" doit être fonctionnel sur les cartes, les fiches produits et les packs.
+## Conventions
 
-## Conventions importantes
-
-- **Server Actions**: fichiers séparés par domaine dans `lib/actions/`.
-- **Pages admin dynamiques**: conserver `export const dynamic = "force-dynamic"` sur les pages admin.
-- **Types Supabase**: `types/database.ts` est manuel. Mettre à jour les fonctions RPC dans `Database.public.Functions`.
-- **Zod v4**: utiliser `error:` au lieu de `invalid_type_error:`.
-- **Apostrophes JSX**: utiliser `&apos;` dans le texte JSX.
+- **Zod v4** : `error:` au lieu de `invalid_type_error:`.
+- **Apostrophes JSX** : `&apos;` dans le texte JSX.
+- **Pages admin dynamiques** : conserver `export const dynamic = "force-dynamic"`.
+- **JSON-LD** : utiliser `JSON.stringify(data).replace(/</g, "\\u003c")` pour éviter le XSS via les valeurs produits.
+- **Redirect après `next`** : valider que `next` commence par `/`, ne commence pas par `//`, et ne contient pas `://`.
+- **Marque** : **ÉlectroMétropolitain** — ne pas utiliser l'ancien nom `ElectroShop`.
 - **Pas de Co-Authored-By** dans les commits.
 
 ## Règle anti-boucle infinie client
 
-Toujours memoïser le client Supabase dans les composants React:
-
 ```ts
+// ✅ Correct
 const supabase = useMemo(() => createClient(), [])
-```
 
-Éviter:
-
-```ts
+// ❌ Provoque une boucle infinie (nouvelle instance à chaque render)
 const supabase = createClient()
 ```
 
-Toujours réinitialiser les états de chargement, même sur early return:
-
+Toujours réinitialiser les états de chargement même sur early return :
 ```ts
 const fetchData = useCallback(async () => {
-  if (!user?.id) {
-    setIsLoading(false)
-    return
-  }
-
+  if (!user?.id) { setIsLoading(false); return }
   try {
     // fetch
   } finally {
@@ -132,20 +135,16 @@ const fetchData = useCallback(async () => {
 }, [user, supabase])
 ```
 
-## Validation avant livraison
+## SEO
 
-Exécuter:
-
-```bash
-npm run lint
-npx tsc --noEmit
-npm run build
-npm audit --omit=dev
-```
-
-Ces commandes doivent rester vertes avant une remise ou une mise en production.
+- Pages produits : JSON-LD `Product` + `BreadcrumbList`.
+- Pages catégories : JSON-LD `ItemList`.
+- Accueil : JSON-LD `Store`.
+- Packs : `/packs/[slug]` (pas l'UUID). Catégories : `/categories/[slug]`.
+- Pages de recherche : `noindex`.
+- Image manquante : `public/placeholder.svg`.
 
 ## Branches
 
-- `main`: production
-- `dev`: développement actif
+- `main` : production
+- `dev` : développement actif

@@ -180,7 +180,7 @@ export default function SpecsSection({ productId, initialSpecs }: SpecsSectionPr
             className="gap-1.5"
           >
             <Save className="h-3.5 w-3.5" />
-            {isSaving ? "Sauvegarde…" : saved ? "Sauvegardé âœ“" : "Sauvegarder les specs"}
+            {isSaving ? "Sauvegarde…" : saved ? "Sauvegardé \u2713" : "Sauvegarder les specs"}
           </Button>
         )}
       </div>

@@ -101,6 +101,8 @@ export default async function ProduitDetailPage({
     }
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -119,7 +121,7 @@ export default async function ProduitDetailPage({
       availability: epuise
         ? "https://schema.org/OutOfStock"
         : "https://schema.org/InStock",
-      url: `/catalogue/${produit.slug}`,
+      url: `${siteUrl}/catalogue/${produit.slug}`,
     },
   };
 
@@ -127,15 +129,15 @@ export default async function ProduitDetailPage({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Accueil", item: "/" },
-      { "@type": "ListItem", position: 2, name: "Catalogue", item: "/catalogue" },
+      { "@type": "ListItem", position: 1, name: "Accueil", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Catalogue", item: `${siteUrl}/catalogue` },
       ...(categories[0]
         ? [
             {
               "@type": "ListItem",
               position: 3,
               name: categories[0].name,
-              item: `/categories/${categories[0].slug}`,
+              item: `${siteUrl}/categories/${categories[0].slug}`,
             },
           ]
         : []),
@@ -143,7 +145,7 @@ export default async function ProduitDetailPage({
         "@type": "ListItem",
         position: categories[0] ? 4 : 3,
         name: produit.name,
-        item: `/catalogue/${produit.slug}`,
+        item: `${siteUrl}/catalogue/${produit.slug}`,
       },
     ],
   };

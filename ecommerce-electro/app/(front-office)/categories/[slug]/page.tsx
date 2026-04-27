@@ -74,6 +74,9 @@ export default async function CategoriePage({ params }: CategoryPageProps) {
     : { data: [] };
 
   const produits = (products ?? []) as ProduitCarte[];
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const safeJsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, "\\u003c");
+
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -81,7 +84,7 @@ export default async function CategoriePage({ params }: CategoryPageProps) {
     itemListElement: produits.map((product, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: `/catalogue/${product.slug}`,
+      url: `${siteUrl}/catalogue/${product.slug}`,
       name: product.name,
     })),
   };
@@ -90,7 +93,7 @@ export default async function CategoriePage({ params }: CategoryPageProps) {
     <div className="container mx-auto px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(itemListJsonLd) }}
       />
 
       <nav className="mb-6 text-sm text-muted-foreground" aria-label="Fil d'Ariane">

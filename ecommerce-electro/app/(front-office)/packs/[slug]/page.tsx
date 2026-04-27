@@ -84,13 +84,20 @@ export default async function PackDetailPage({
   const imageUrl = produits[0]?.product_images
     ?.slice()
     .sort((a, b) => a.sort_order - b.sort_order)[0]?.url;
+  // Répartir le prix du pack proportionnellement entre les produits
   const packActionProducts = produits.map((p) => ({
     id: p.id,
     name: p.name,
-    price: p.price,
+    price: totalOriginal > 0
+      ? Math.round((p.price / totalOriginal) * pack.price * 100) / 100
+      : p.price,
     stock: p.stock,
     image: [...(p.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? "",
   }));
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const safeJsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, "\\u003c");
+
   const packJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -107,7 +114,7 @@ export default async function PackDetailPage({
         produits.length > 0 && produits.every((p: { stock: number }) => p.stock > 0)
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-      url: `/packs/${pack.slug}`,
+      url: `${siteUrl}/packs/${pack.slug}`,
     },
     isRelatedTo: produits.map(
       (p: { name: string; slug: string; brand: string; price: number }) => ({
@@ -121,7 +128,7 @@ export default async function PackDetailPage({
           "@type": "Offer",
           price: p.price,
           priceCurrency: "CAD",
-          url: `/catalogue/${p.slug}`,
+          url: `${siteUrl}/catalogue/${p.slug}`,
         },
       })
     ),
@@ -131,7 +138,7 @@ export default async function PackDetailPage({
     <div className="container mx-auto px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(packJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(packJsonLd) }}
       />
       <Link
         href="/packs"

@@ -62,8 +62,9 @@ export default function Navbar() {
     router.push(href);
   };
 
-  const displayName = user?.profile 
-    ? `${user.profile.first_name} ${user.profile.last_name}` 
+  const nameParts = [user?.profile?.first_name, user?.profile?.last_name].filter(Boolean)
+  const displayName = nameParts.length > 0
+    ? nameParts.join(" ")
     : user?.email?.split("@")[0] || "Utilisateur";
 
   return (
