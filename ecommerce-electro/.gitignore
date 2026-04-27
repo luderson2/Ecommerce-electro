@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# artefacts internes (agents, audit, planification)
+.agents/
+AUDIT.md
+CHECKLIST_MANUELLE.md
+PLAN.md
+skills-lock.json
