@@ -44,7 +44,7 @@ export const metadata: Metadata = {
       "Magasinez des électroménagers de qualité avec livraison rapide au Québec.",
     images: [
       {
-        url: "/placeholder.svg",
+        url: "/og-default.svg",
         width: 1200,
         height: 630,
         alt: "ÉlectroMétropolitain",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     title: "ÉlectroMétropolitain - Électroménagers au Québec",
     description:
       "Magasinez des électroménagers de qualité avec livraison rapide au Québec.",
-    images: ["/placeholder.svg"],
+    images: ["/og-default.svg"],
   },
   robots: {
     index: true,

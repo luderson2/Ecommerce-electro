@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { getCheckoutSession, confirmOrder } from '@/lib/actions/stripe'
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
@@ -21,6 +20,32 @@ function CheckoutSuccessContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   const hasConfirmed = useRef(false)
+
+  const getJson = async <T,>(url: string): Promise<T> => {
+    const response = await fetch(url)
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(typeof data?.error === 'string' ? data.error : 'Requete impossible.')
+    }
+
+    return data as T
+  }
+
+  const postJson = async <T,>(url: string, payload: unknown): Promise<T> => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(typeof data?.error === 'string' ? data.error : 'Requete impossible.')
+    }
+
+    return data as T
+  }
 
   useEffect(() => {
    
@@ -40,11 +65,15 @@ function CheckoutSuccessContent() {
         hasConfirmed.current = true 
         
        
-        const session = await getCheckoutSession(sessionId)
+        const session = await getJson<{
+          status: string | null
+          customerEmail: string | null
+          paymentStatus: string | null
+        }>(`/api/checkout/session-status?session_id=${encodeURIComponent(sessionId)}`)
 
         
         if (session.paymentStatus === 'paid' || session.status === 'complete') {
-          await confirmOrder(orderId, sessionId)
+          await postJson('/api/checkout/confirm', { orderId, sessionId })
           
           setCustomerEmail(session.customerEmail || null)
           setStatus('success')

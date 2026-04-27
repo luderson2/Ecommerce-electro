@@ -46,9 +46,10 @@ export default async function PacksPage() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {(packs ?? []).map((pack) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const produits = (pack.pack_products ?? []).map((pp: any) => pp.products).filter(Boolean);
-            const totalOriginal = produits.reduce((sum: number, p: { price: number }) => sum + Number(p.price), 0);
+            const produits = (pack.pack_products ?? [])
+              .map((pp: { products: { price: number } | null }) => pp.products)
+              .filter((p): p is { price: number } => p !== null);
+            const totalOriginal = produits.reduce((sum, p) => sum + Number(p.price), 0);
             const economie = totalOriginal > pack.price ? totalOriginal - pack.price : 0;
             const pct = totalOriginal > 0 ? Math.round((economie / totalOriginal) * 100) : 0;
 

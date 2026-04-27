@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { User, Package, Heart, Headphones, LogOut, ChevronRight, Loader2, CheckCircle2, AlertCircle, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,7 +21,6 @@ import type { Database } from '@/types/database'
 
 
 export default function AccountPage() {
-  const router = useRouter()
   const { user, logout, isLoading, refreshUser } = useAuth()
   const { wishlistItems } = useCart()
   const supabase = useMemo(() => createClient(), [])
@@ -89,12 +87,6 @@ export default function AccountPage() {
     loadOrders()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/connexion?redirect=/compte/profil')
-    }
-  }, [user, isLoading, router])
 
   const updateField = (field: string, value: string) => {
     setProfile({ ...profile, [field]: value })
@@ -172,8 +164,6 @@ export default function AccountPage() {
       await logout()
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error)
-    } finally {
-      router.replace('/')
     }
   }
 
@@ -185,7 +175,23 @@ export default function AccountPage() {
     )
   }
 
-  if (!user) return null
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-16 text-center">
+          <h1 className="text-2xl font-bold">Connexion requise</h1>
+          <p className="mt-2 text-muted-foreground">
+            Votre session n&apos;est pas disponible pour le moment.
+          </p>
+          <Button asChild className="mt-6">
+            <Link href="/connexion?next=/compte/profil">Aller à la connexion</Link>
+          </Button>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   const displayName = profile.firstName
     ? `${profile.firstName} ${profile.lastName}`

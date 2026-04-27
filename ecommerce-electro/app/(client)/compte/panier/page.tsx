@@ -212,7 +212,7 @@ export default function CartPage() {
                   </CardContent>
                   <CardFooter>
                     <Button className="w-full py-6 text-lg" size="lg" asChild>
-                      <Link href="checkout">
+                      <Link href="/compte/checkout">
                         Passer à la caisse <ArrowRight className="ml-2 h-5 w-5" />
                       </Link>
                     </Button>

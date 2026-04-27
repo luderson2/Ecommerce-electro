@@ -57,6 +57,11 @@ export default function Navbar() {
     router.push(`/recherche?q=${encodeURIComponent(q)}`);
   };
 
+  const handleAccountNavigation = (href: string) => {
+    setMobileMenuOpen(false);
+    router.push(href);
+  };
+
   const displayName = user?.profile 
     ? `${user.profile.first_name} ${user.profile.last_name}` 
     : user?.email?.split("@")[0] || "Utilisateur";
@@ -154,15 +159,17 @@ export default function Navbar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/compte/profil" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" /> Mon profil
-                    </Link>
+                  <DropdownMenuItem
+                    onSelect={() => handleAccountNavigation("/compte/profil")}
+                    className="cursor-pointer"
+                  >
+                    <User className="mr-2 h-4 w-4" /> Mon profil
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/compte/commandes" className="cursor-pointer">
-                      <Package className="mr-2 h-4 w-4" /> Mes commandes
-                    </Link>
+                  <DropdownMenuItem
+                    onSelect={() => handleAccountNavigation("/compte/commandes")}
+                    className="cursor-pointer"
+                  >
+                    <Package className="mr-2 h-4 w-4" /> Mes commandes
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
@@ -180,11 +187,17 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <DropdownMenuItem asChild>
-                    <Link href="/connexion" className="cursor-pointer font-semibold">Connexion</Link>
+                  <DropdownMenuItem
+                    onSelect={() => handleAccountNavigation("/connexion")}
+                    className="cursor-pointer font-semibold"
+                  >
+                    Connexion
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/inscription" className="cursor-pointer">Inscription</Link>
+                  <DropdownMenuItem
+                    onSelect={() => handleAccountNavigation("/inscription")}
+                    className="cursor-pointer"
+                  >
+                    Inscription
                   </DropdownMenuItem>
                 </>
               )}

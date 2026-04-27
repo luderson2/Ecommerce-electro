@@ -1,9 +1,8 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
-
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js'
 
 export interface UserProfile {
   id: string
@@ -44,153 +43,172 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-function withTimeout<T>(promise: PromiseLike<T>, ms = 15000): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      window.setTimeout(() => reject(new Error('La requete a expire. Veuillez reessayer.')), ms)
-    }),
-  ])
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
-const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
-    const { data: profile, error } = await withTimeout(
-      supabase
+  const fetchUserProfile = useCallback(async (supabaseUser: SupabaseUser): Promise<User> => {
+    try {
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single()
-    )
 
-    if (error || !profile) {
-      return {
-        id: supabaseUser.id,
-        email: supabaseUser.email || '',
-        profile: null,
+      if (error || !profile) {
+        return { id: supabaseUser.id, email: supabaseUser.email ?? '', profile: null }
       }
-    }
 
-    
-    return {
-      id: supabaseUser.id,
-      email: supabaseUser.email || '',
-      profile,
+      return { id: supabaseUser.id, email: supabaseUser.email ?? '', profile }
+    } catch {
+      return { id: supabaseUser.id, email: supabaseUser.email ?? '', profile: null }
     }
-  }
+  }, [supabase])
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user: supabaseUser } } = await withTimeout(supabase.auth.getUser())
-        if (supabaseUser) {
-          const userData = await fetchUserProfile(supabaseUser)
-          setUser(userData)
-        }
-      } catch (error) {
-        console.error('Erreur lors du chargement de la session:', error)
-        // Session invalide ou erreur reseau: on reste deconnecte.
-      } finally {
+    let isActive = true
+    const loadingGuard = window.setTimeout(() => {
+      if (isActive) {
         setIsLoading(false)
       }
-    }
+    }, 4000)
 
-    getUser()
-
-  
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
-          if (event === 'SIGNED_IN' && session?.user) {
-            const userData = await fetchUserProfile(session.user)
-            setUser(userData)
-          } else if (event === 'SIGNED_OUT') {
+    const syncSession = async (session: Session | null) => {
+      try {
+        if (!session?.user) {
+          if (isActive) {
             setUser(null)
           }
-        } catch (error) {
-          console.error('Erreur lors du changement de session:', error)
+          return
+        }
+
+        const userData = await fetchUserProfile(session.user)
+        if (isActive) {
+          setUser(userData)
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false)
         }
       }
-    )
+    }
+
+    const bootstrapSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          throw error
+        }
+
+        await syncSession(data.session)
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation de la session:', error)
+        if (isActive) {
+          setUser(null)
+          setIsLoading(false)
+        }
+      }
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        if (isActive) {
+          setUser(null)
+          setIsLoading(false)
+        }
+        return
+      }
+
+      void syncSession(session)
+    })
+
+    void bootstrapSession()
 
     return () => {
+      isActive = false
+      window.clearTimeout(loadingGuard)
       subscription.unsubscribe()
     }
-  // Le client Supabase est memoïsé; ce chargement doit rester exécuté une seule fois.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchUserProfile, supabase])
 
   const refreshUser = async () => {
-    const { data: { user: supabaseUser } } = await withTimeout(supabase.auth.getUser())
-    if (supabaseUser) {
-      const userData = await fetchUserProfile(supabaseUser)
-      setUser(userData)
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (session?.user) {
+        const userData = await fetchUserProfile(session.user)
+        setUser(userData)
+        return
+      }
+    } catch (error) {
+      console.error('Erreur lors du rafraichissement de la session:', error)
     }
+
+    setUser(null)
+    setIsLoading(false)
   }
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     try {
-      const { data, error } = await withTimeout(
-        supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-      )
+      setIsLoading(true)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
-        let errorMessage = "Courriel ou mot de passe incorrect"
-        if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Veuillez confirmer votre courriel avant de vous connecter'
-        }
+        const errorMessage = error.message.includes('Email not confirmed')
+          ? 'Veuillez confirmer votre courriel avant de vous connecter'
+          : 'Courriel ou mot de passe incorrect'
+        setIsLoading(false)
         return { success: false, error: errorMessage }
       }
 
       if (data.user) {
         const userData = await fetchUserProfile(data.user)
         setUser(userData)
+        setIsLoading(false)
         return { success: true, user: userData }
       }
 
+      setIsLoading(false)
       return { success: true }
     } catch {
+      setUser(null)
+      setIsLoading(false)
       return { success: false, error: 'Une erreur est survenue lors de la connexion' }
     }
   }
 
   const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data: authData, error } = await withTimeout(
-        supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/compte/profil`,
-            data: {
-              first_name: data.firstName,
-              last_name: data.lastName,
-              phone: data.phone || null,
-            },
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/compte/profil`,
+          data: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone: data.phone || null,
           },
-        })
-      )
+        },
+      })
 
       if (error) {
-        let errorMessage = error.message
-        if (error.message.includes('User already registered')) {
-          errorMessage = 'Un compte existe déjà avec ce courriel'
-        }
+        const errorMessage = error.message.includes('User already registered')
+          ? 'Un compte existe deja avec ce courriel'
+          : error.message
         return { success: false, error: errorMessage }
       }
 
-      
       if (authData.user && !authData.session) {
-        return { 
-          success: true, 
-          error: 'Un courriel de confirmation a été envoyé. Veuillez vérifier votre boîte de réception.' 
+        return {
+          success: true,
+          error: 'Un courriel de confirmation a ete envoye. Veuillez verifier votre boite de reception.',
         }
       }
 
@@ -199,20 +217,22 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
         setUser(userData)
       }
 
+      setIsLoading(false)
       return { success: true }
     } catch {
-      return { success: false, error: "Erreur lors de la création du compte" }
+      setIsLoading(false)
+      return { success: false, error: 'Erreur lors de la creation du compte' }
     }
   }
 
-  
   const logout = async () => {
     try {
-      await withTimeout(supabase.auth.signOut())
+      await supabase.auth.signOut()
     } catch (error) {
       console.error('Erreur lors de la deconnexion:', error)
     }
     setUser(null)
+    setIsLoading(false)
   }
 
   return (
@@ -221,7 +241,6 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
     </AuthContext.Provider>
   )
 }
-
 
 export function useAuth() {
   const context = useContext(AuthContext)

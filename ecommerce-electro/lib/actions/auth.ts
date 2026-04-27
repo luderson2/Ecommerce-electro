@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { connexionSchema, inscriptionSchema } from "@/lib/validations/auth";
 
 const DESTINATIONS: Record<string, string> = {
   admin: "/admin",
@@ -14,13 +15,17 @@ export async function seConnecter(
   _prevState: { error?: string } | null,
   formData: FormData
 ): Promise<{ error: string }> {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const next = (formData.get("next") as string) || "";
+  const parsed = connexionSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    next: formData.get("next") ?? "",
+  });
 
-  if (!email || !password) {
-    return { error: "Veuillez remplir tous les champs." };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Données invalides." };
   }
+
+  const { email, password, next = "" } = parsed.data;
 
   const supabase = await createClient();
   const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -46,15 +51,19 @@ export async function sInscrire(
   _prevState: { error?: string; success?: boolean; needsConfirmation?: boolean } | null,
   formData: FormData
 ): Promise<{ error?: string; success?: boolean; needsConfirmation?: boolean }> {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
-  const phone = formData.get("phone") as string;
+  const parsed = inscriptionSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    phone: formData.get("phone") ?? "",
+  });
 
-  if (!email || !password || !firstName || !lastName) {
-    return { error: "Veuillez remplir tous les champs obligatoires." };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Données invalides." };
   }
+
+  const { email, password, firstName, lastName, phone } = parsed.data;
 
   const supabase = await createClient();
 

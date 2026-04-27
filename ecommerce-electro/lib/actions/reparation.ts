@@ -106,8 +106,7 @@ export async function changerStatutReparation(
     return { error: "Données invalides." };
   }
 
-  const supabase = createAdminClient();
-  const { error } = await supabase
+  const { error } = await authClient
     .from("demandes_reparation")
     .update({ statut, notes_admin })
     .eq("id", id)

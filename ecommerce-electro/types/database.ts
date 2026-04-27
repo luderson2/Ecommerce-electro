@@ -209,6 +209,22 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["demandes_reparation"]["Insert"]>;
         Relationships: [];
       };
+      stripe_webhook_events: {
+        Row: {
+          event_id: string;
+          event_type: string;
+          received_at: string;
+          processed_at: string | null;
+        };
+        Insert: {
+          event_id: string;
+          event_type: string;
+          received_at?: string;
+          processed_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["stripe_webhook_events"]["Insert"]>;
+        Relationships: [];
+      };
       cart_items: {
         Row: {
           id: string;

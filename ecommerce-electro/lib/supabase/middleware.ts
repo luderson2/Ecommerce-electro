@@ -42,16 +42,5 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Rediriger les utilisateurs déjà connectés hors des pages d'auth
-  // La vérification du rôle (admin | employee) est faite dans app/admin/layout.tsx
-  const authPaths = ["/connexion", "/inscription"];
-  const isAuthPath = authPaths.some((p) => path === p);
-
-  if (isAuthPath && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/compte/profil";
-    return NextResponse.redirect(url);
-  }
-
   return supabaseResponse;
 }

@@ -63,26 +63,76 @@ export default async function PackDetailPage({
 
   if (!pack) notFound();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const produits = (pack.pack_products ?? []).map((pp: any) => pp.products).filter(Boolean);
-  const totalOriginal = produits.reduce((sum: number, p: { price: number }) => sum + Number(p.price), 0);
+  type PackProduit = {
+    id: string;
+    name: string;
+    slug: string;
+    price: number;
+    brand: string;
+    stock: number;
+    product_images: { url: string; sort_order: number }[];
+  };
+
+  const produits = (pack.pack_products ?? [])
+    .map((pp: { products: PackProduit | null }) => pp.products)
+    .filter((p): p is PackProduit => p !== null);
+  const totalOriginal = produits.reduce((sum, p) => sum + Number(p.price), 0);
   const economie = totalOriginal > pack.price ? totalOriginal - pack.price : 0;
   const pct = totalOriginal > 0 ? Math.round((economie / totalOriginal) * 100) : 0;
 
   // Image du premier produit du pack
   const imageUrl = produits[0]?.product_images
     ?.slice()
-    .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)[0]?.url;
-  const packActionProducts = produits.map((p: { id: string; name: string; price: number; stock: number; product_images: { url: string; sort_order: number }[] }) => ({
+    .sort((a, b) => a.sort_order - b.sort_order)[0]?.url;
+  const packActionProducts = produits.map((p) => ({
     id: p.id,
     name: p.name,
     price: p.price,
     stock: p.stock,
     image: [...(p.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? "",
   }));
+  const packJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: pack.name,
+    description: pack.description ?? undefined,
+    image: imageUrl ? [imageUrl] : [],
+    sku: pack.id,
+    category: "Pack électroménager",
+    offers: {
+      "@type": "Offer",
+      price: pack.price,
+      priceCurrency: "CAD",
+      availability:
+        produits.length > 0 && produits.every((p: { stock: number }) => p.stock > 0)
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      url: `/packs/${pack.slug}`,
+    },
+    isRelatedTo: produits.map(
+      (p: { name: string; slug: string; brand: string; price: number }) => ({
+        "@type": "Product",
+        name: p.name,
+        brand: {
+          "@type": "Brand",
+          name: p.brand,
+        },
+        offers: {
+          "@type": "Offer",
+          price: p.price,
+          priceCurrency: "CAD",
+          url: `/catalogue/${p.slug}`,
+        },
+      })
+    ),
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(packJsonLd) }}
+      />
       <Link
         href="/packs"
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"

@@ -17,7 +17,15 @@ import Footer from '@/components/layout/Footer'
 import { SectionTitle } from '@/components/section-title'
 import { useCart } from '@/contexts/cart-context'
 import { useAuth } from '@/contexts/auth-context'
-import { createCheckoutSession, cancelPendingOrder, type DeliveryMode } from '@/lib/actions/stripe'
+
+type AddressErrors = {
+  street?: string
+  city?: string
+  province?: string
+  postalCode?: string
+}
+
+type DeliveryMode = 'standard' | 'express' | 'scheduled'
 
 function CheckoutContent() {
   const router = useRouter()
@@ -28,6 +36,7 @@ function CheckoutContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [postalCodeValid, setPostalCodeValid] = useState<boolean | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<AddressErrors>({})
   const [selectedDelivery, setSelectedDelivery] = useState('standard')
   const [tipAmount, setTipAmount] = useState<number>(0)
   const [address, setAddress] = useState({
@@ -39,6 +48,22 @@ function CheckoutContent() {
     country: 'Canada',
   })
   const addressInitialized = useRef(false)
+  const paymentErrorRef = useRef<HTMLDivElement | null>(null)
+
+  async function postJson<T>(url: string, payload: unknown): Promise<T> {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(typeof data?.error === 'string' ? data.error : 'Requete impossible.')
+    }
+
+    return data as T
+  }
 
   // Pré-remplir l'adresse depuis le profil une seule fois
   useEffect(() => {
@@ -62,7 +87,7 @@ function CheckoutContent() {
     const canceled = searchParams.get('canceled')
     const orderId  = searchParams.get('order_id')
     if (canceled === 'true' && orderId) {
-      cancelPendingOrder(orderId).catch(console.error)
+      postJson('/api/checkout/cancel', { orderId }).catch(console.error)
     }
   }, [searchParams])
 
@@ -77,17 +102,49 @@ function CheckoutContent() {
     setPostalCodeValid(code.startsWith('H') || code.startsWith('J') || code.startsWith('G') || code.startsWith('K'))
   }
 
+  const validateAddress = () => {
+    const errors: AddressErrors = {}
+    const postalCode = address.postalCode.trim().toUpperCase()
+
+    if (!address.street.trim()) errors.street = 'L adresse de livraison est obligatoire.'
+    if (!address.city.trim()) errors.city = 'La ville est obligatoire.'
+    if (!address.province.trim()) errors.province = 'La province est obligatoire.'
+    if (!postalCode) {
+      errors.postalCode = 'Le code postal est obligatoire.'
+    } else if (!/^[A-Z]\d[A-Z][ -]?\d[A-Z]\d$/.test(postalCode)) {
+      errors.postalCode = 'Le code postal doit etre au format H1A 1A1.'
+    }
+
+    return errors
+  }
+
+  const revealError = (message: string) => {
+    setError(message)
+    window.setTimeout(() => {
+      paymentErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 0)
+  }
+
   const handleProceedToPayment = async () => {
     if (!user) {
       router.push('/connexion')
       return
     }
     if (cartItems.length === 0) {
-      setError('Votre panier est vide.')
+      revealError('Votre panier est vide.')
       return
     }
-    if (!address.street.trim() || !address.city.trim() || !address.province.trim() || !address.postalCode.trim() || !address.country.trim()) {
-      setError("Veuillez remplir tous les champs d'adresse de livraison obligatoires.")
+
+    const nextFieldErrors = validateAddress()
+    setFieldErrors(nextFieldErrors)
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      revealError("Veuillez corriger les champs obligatoires de l'adresse de livraison.")
+      return
+    }
+
+    if (postalCodeValid === false) {
+      revealError('Le code postal indique une zone non desservie pour la livraison.')
       return
     }
 
@@ -101,22 +158,25 @@ function CheckoutContent() {
         product_id,
         quantity,
       }))
-      const { url } = await createCheckoutSession(
-        safeCartItems,
-        selectedDelivery as DeliveryMode,
-        tipAmount,
+      const { url } = await postJson<{ url: string }>(
+        '/api/checkout/session',
         {
-          street:     address.street.trim(),
-          apartment:  address.apartment.trim() || null,
-          city:       address.city.trim(),
-          province:   address.province.trim(),
-          postalCode: address.postalCode.trim(),
-          country:    address.country.trim(),
+          cartItems: safeCartItems,
+          deliveryMode: selectedDelivery as DeliveryMode,
+          tipAmount,
+          shippingAddress: {
+            street: address.street.trim(),
+            apartment: address.apartment.trim() || null,
+            city: address.city.trim(),
+            province: address.province.trim(),
+            postalCode: address.postalCode.trim(),
+            country: address.country.trim(),
+          },
         }
       )
       window.location.href = url
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la creation de la session de paiement.')
+      revealError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la creation de la session de paiement.')
       setIsLoading(false)
     }
   }
@@ -163,12 +223,6 @@ function CheckoutContent() {
       <main className="container mx-auto px-4 py-8">
         <SectionTitle title="Paiement" subtitle="Completez votre commande en toute securite" />
 
-        {error && (
-          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
-            {error}
-          </div>
-        )}
-
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* Customer info */}
@@ -212,8 +266,13 @@ function CheckoutContent() {
                     id="address"
                     placeholder="123 rue Principale"
                     value={address.street}
-                    onChange={(e) => setAddress(a => ({ ...a, street: e.target.value }))}
+                    onChange={(e) => {
+                      setAddress(a => ({ ...a, street: e.target.value }))
+                      setFieldErrors((current) => ({ ...current, street: undefined }))
+                    }}
+                    aria-invalid={Boolean(fieldErrors.street)}
                   />
+                  {fieldErrors.street && <p className="text-sm text-destructive">{fieldErrors.street}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="apartment">Appartement, suite, etc. (optionnel)</Label>
@@ -231,8 +290,13 @@ function CheckoutContent() {
                       id="city"
                       placeholder="Montreal"
                       value={address.city}
-                      onChange={(e) => setAddress(a => ({ ...a, city: e.target.value }))}
+                      onChange={(e) => {
+                        setAddress(a => ({ ...a, city: e.target.value }))
+                        setFieldErrors((current) => ({ ...current, city: undefined }))
+                      }}
+                      aria-invalid={Boolean(fieldErrors.city)}
                     />
+                    {fieldErrors.city && <p className="text-sm text-destructive">{fieldErrors.city}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="province">Province *</Label>
@@ -240,8 +304,13 @@ function CheckoutContent() {
                       id="province"
                       placeholder="Quebec"
                       value={address.province}
-                      onChange={(e) => setAddress(a => ({ ...a, province: e.target.value }))}
+                      onChange={(e) => {
+                        setAddress(a => ({ ...a, province: e.target.value }))
+                        setFieldErrors((current) => ({ ...current, province: undefined }))
+                      }}
+                      aria-invalid={Boolean(fieldErrors.province)}
                     />
+                    {fieldErrors.province && <p className="text-sm text-destructive">{fieldErrors.province}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="postal">Code postal *</Label>
@@ -250,12 +319,18 @@ function CheckoutContent() {
                         id="postal"
                         placeholder="H1A 1A1"
                         value={address.postalCode}
-                        onChange={(e) => { setAddress(a => ({ ...a, postalCode: e.target.value })); setPostalCodeValid(null) }}
+                        onChange={(e) => {
+                          setAddress(a => ({ ...a, postalCode: e.target.value }))
+                          setPostalCodeValid(null)
+                          setFieldErrors((current) => ({ ...current, postalCode: undefined }))
+                        }}
+                        aria-invalid={Boolean(fieldErrors.postalCode)}
                       />
                       <Button variant="outline" size="icon" onClick={checkPostalCode} type="button">
                         <MapPin className="h-4 w-4" />
                       </Button>
                     </div>
+                    {fieldErrors.postalCode && <p className="text-sm text-destructive">{fieldErrors.postalCode}</p>}
                   </div>
                 </div>
                 {postalCodeValid !== null && (
@@ -387,6 +462,15 @@ function CheckoutContent() {
                     <span>Total</span>
                     <span>{total.toFixed(2)} $</span>
                   </div>
+
+                  {error && (
+                    <div
+                      ref={paymentErrorRef}
+                      className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+                    >
+                      {error}
+                    </div>
+                  )}
 
                   <Button
                     className="w-full"

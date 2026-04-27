@@ -1,70 +1,27 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useActionState, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/auth-context'
-
-const DESTINATIONS: Record<string, string> = {
-  admin: '/admin',
-  employee: '/admin',
-  client: '/',
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      window.setTimeout(() => reject(new Error('timeout')), ms)
-    }),
-  ])
-}
+import { seConnecter } from '@/lib/actions/auth'
 
 export default function ConnexionForm() {
-  const router = useRouter()
+  const [state, formAction, isPending] = useActionState(seConnecter, null)
   const searchParams = useSearchParams()
   const next = searchParams.get('next') || searchParams.get('redirect') || ''
-  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [isPending, setIsPending] = useState(false)
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setError('')
-    setIsPending(true)
-
-    const formData = new FormData(event.currentTarget)
-    const email = String(formData.get('email') || '')
-    const password = String(formData.get('password') || '')
-
-    try {
-      const result = await withTimeout(login(email, password), 15000)
-
-      if (!result.success) {
-        setError(result.error || 'Courriel ou mot de passe incorrect.')
-        return
-      }
-
-      const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : null
-      const destination = safeNext ?? DESTINATIONS[result.user?.profile?.role ?? ''] ?? '/'
-      router.replace(destination)
-    } catch {
-      setError('La connexion prend trop de temps. Vérifiez votre connexion et réessayez.')
-    } finally {
-      setIsPending(false)
-    }
-  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
-          {error}
+    <form action={formAction} className="space-y-4">
+      {next && <input type="hidden" name="next" value={next} />}
+
+      {state?.error && (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+          {state.error}
         </div>
       )}
 
@@ -89,7 +46,7 @@ export default function ConnexionForm() {
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Mot de passe</Label>
           <Link href="/mot-de-passe-oublie" className="text-xs text-primary hover:underline">
-            Oublié ?
+            Oublie ?
           </Link>
         </div>
         <div className="relative">
@@ -106,7 +63,7 @@ export default function ConnexionForm() {
           />
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)}
+            onClick={() => setShowPassword((value) => !value)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             disabled={isPending}
             aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
@@ -116,7 +73,7 @@ export default function ConnexionForm() {
         </div>
       </div>
 
-      <Button type="submit" className="w-full mt-2" disabled={isPending}>
+      <Button type="submit" className="mt-2 w-full" disabled={isPending}>
         {isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -127,11 +84,11 @@ export default function ConnexionForm() {
         )}
       </Button>
 
-      <div className="text-center mt-6">
+      <div className="mt-6 text-center">
         <p className="text-sm text-muted-foreground">
           Pas de compte ?{' '}
-          <Link href="/inscription" className="text-primary font-medium hover:underline">
-            Créer un compte
+          <Link href="/inscription" className="font-medium text-primary hover:underline">
+            Creer un compte
           </Link>
         </p>
       </div>
