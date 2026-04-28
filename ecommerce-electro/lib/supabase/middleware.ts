@@ -42,5 +42,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  const authOnlyPaths = ["/inscription", "/connexion"];
+  if (authOnlyPaths.includes(path) && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/compte/profil";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   return supabaseResponse;
 }

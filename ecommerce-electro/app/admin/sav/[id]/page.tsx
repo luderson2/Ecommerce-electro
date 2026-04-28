@@ -122,7 +122,7 @@ export default async function AdminSavDetailPage({
               <h2 className="font-semibold text-foreground text-sm">Statut de la demande</h2>
             </div>
             <div className="px-5 py-4">
-              <StatutSavForm demandeId={demande.id} statutActuel={demande.status} />
+              <StatutSavForm key={demande.status} demandeId={demande.id} statutActuel={demande.status} />
             </div>
           </div>
 
