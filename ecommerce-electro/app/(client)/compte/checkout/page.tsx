@@ -416,7 +416,7 @@ function CheckoutContent() {
                       <div key={item.id} className="flex gap-3">
                         <div className="relative h-14 w-14 flex-shrink-0 rounded-md bg-secondary/50 overflow-hidden">
                           {item.product_image && (
-                            <Image src={item.product_image} alt={item.product_name} fill className="object-contain p-1" />
+                            <Image src={item.product_image} alt={item.product_name} fill className="object-contain p-1" unoptimized={item.product_image.includes('placehold.co')} />
                           )}
                           <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
                             {item.quantity}

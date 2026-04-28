@@ -182,7 +182,7 @@ export async function createCheckoutSessionForUser(
       currency: 'cad',
       product_data: {
         name: productMap[item.product_id].name,
-        ...(imageMap[item.product_id] ? { images: [imageMap[item.product_id]] } : {}),
+        ...(imageMap[item.product_id] ? { images: [encodeURI(imageMap[item.product_id])] } : {}),
       },
       unit_amount: Math.round(productMap[item.product_id].price * 100),
     },

@@ -175,6 +175,7 @@ export default function InscriptionPage() {
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     placeholder="Créer un mot de passe"
                     value={formData.password}
                     onChange={(e) => updateField('password', e.target.value)}
@@ -220,6 +221,7 @@ export default function InscriptionPage() {
                   <Input
                     id="confirmPassword"
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     placeholder="Confirmez votre mot de passe"
                     value={formData.confirmPassword}
                     onChange={(e) => updateField('confirmPassword', e.target.value)}

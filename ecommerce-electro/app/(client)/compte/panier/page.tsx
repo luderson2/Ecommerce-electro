@@ -133,6 +133,7 @@ export default function CartPage() {
                           alt={item.product_name}
                           fill
                           className="object-contain p-2"
+                          unoptimized={!!item.product_image?.includes('placehold.co')}
                         />
                       </div>
 
