@@ -18,6 +18,7 @@
 | Catalogue + recherche + favoris | 0 | — | ✅ PASS |
 | Réparation + panel admin | 1 | 1/1 | ✅ PASS |
 | Packs — navigation, détail, panier | 1 | 1/1 | ✅ PASS |
+| Comparateur — ajout, tableau, suppression | 0 | — | ✅ PASS |
 | **Total** | **6** | **6/6** | ✅ |
 
 ---
@@ -202,10 +203,45 @@
 
 ---
 
+## Comparateur — Ajout, Affichage et Suppression
+
+**Résultat : PASS** (0 bug)
+
+**Date :** 29 avril 2026
+
+### Architecture du comparateur
+
+- **Depuis le catalogue** (`CatalogueGrille.tsx`) : chaque `ProductCard` expose un bouton toggle (icône `GitCompareArrows`). Quand ≥ 1 produit sélectionné, une barre flottante apparaît en bas. Le bouton "Comparer" est activé à partir de 2 produits. Clic → navigation `/comparateur?ids=id1,id2`.
+- **Page `/comparateur`** (`ComparateurClient.tsx`) : état géré dans l'URL (`?ids=`). Max 3 produits. Le select dropdown permet d'ajouter un produit supplémentaire directement sur la page.
+- **Page produit** : aucun bouton comparateur — uniquement accessible depuis le catalogue.
+
+### Étapes testées
+
+1. `/comparateur` sans `?ids=` → affiche les 2 premiers produits par défaut (comportement intentionnel dans `page.tsx`) ✓
+2. `/comparateur?ids=` (vide explicite) → état vide "Aucun produit à comparer." + CTA "Parcourir le catalogue" ✓
+3. Catalogue : clic "Ajouter au comparateur" sur produit 1 → barre flottante "1 produit sélectionné", bouton "Comparer" désactivé ✓
+4. Bouton bascule → `aria-label` passe de "Ajouter au comparateur" à "Retirer du comparateur" immédiatement ✓ (prévention de doublon visuelle)
+5. Clic "Ajouter au comparateur" sur produit 2 → "2 produits sélectionnés", bouton "Comparer" actif ✓
+6. Clic "Comparer" → navigation `/comparateur?ids=id1,id2`, tableau côte à côte affiché ✓
+7. Tableau comparatif : Marque (TCL, Bosch), Prix (495,05$ / 1 349,00$), Disponibilité (En stock), Description — tous présents ✓
+8. Ajout d'un 3e produit via le `<select>` sur la page comparateur → 3 colonnes, select masqué (max atteint) ✓
+9. Retrait d'un produit (bouton X en haut de carte) → tableau réduit à 2, URL mise à jour ✓
+10. Retrait des 2 derniers produits → URL `/comparateur?ids=`, état vide réaffiché ✓
+
+### Edge cases testés
+
+- **Prévention de doublon** : toggle `includes(id)` dans `CatalogueGrille.tsx` + `compareIds.includes(id)` dans `ComparateurClient.tsx` — impossible d'ajouter le même produit deux fois ✓
+- **Comparateur vide** : pas de crash, état vide propre avec CTA ✓
+- **Bouton comparateur depuis la page détail produit** : absent — seul le catalogue expose ce bouton (documenté, non un bug) ✓
+
+### Aucun bug trouvé
+
+---
+
 ## Flows non testés (à couvrir)
 
 - [x] Packs — ajout au panier, prix distribué proportionnellement ✅
-- [ ] Comparateur — ajout de produits, tableau de comparaison
+- [x] Comparateur — ajout de produits, tableau de comparaison ✅
 - [ ] Emails transactionnels end-to-end (Resend en mode test)
 - [ ] SMS Twilio (notifications réparation)
 - [ ] Flow rate limiting sur `/api/checkout/session` et `/api/checkout/confirm`
@@ -241,7 +277,7 @@
 
 ---
 
-- [ ] **Comparateur — ajout, affichage et suppression** *(CRITIQUE)*
+- [x] **Comparateur — ajout, affichage et suppression** *(CRITIQUE)* ✅ 29 avr. 2026
 
   **Flow :** catalogue → bouton "Ajouter au comparateur" (×2 min) → `/comparateur`
 
