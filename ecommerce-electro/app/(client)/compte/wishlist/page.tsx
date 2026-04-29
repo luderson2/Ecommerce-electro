@@ -144,6 +144,7 @@ export default function WishlistPage() {
                         alt={item.product_name}
                         fill
                         className="object-contain p-4"
+                        unoptimized={!!item.product_image?.includes('placehold.co')}
                       />
                     </Link>
                   </div>

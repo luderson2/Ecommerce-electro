@@ -19,7 +19,8 @@
 | Réparation + panel admin | 1 | 1/1 | ✅ PASS |
 | Packs — navigation, détail, panier | 1 | 1/1 | ✅ PASS |
 | Comparateur — ajout, tableau, suppression | 0 | — | ✅ PASS |
-| **Total** | **6** | **6/6** | ✅ |
+| Wishlist `/compte/wishlist` | 2 | 1/2 | ⚠️ PASS partiel |
+| **Total** | **8** | **7/8** | ⚠️ |
 
 ---
 
@@ -238,6 +239,39 @@
 
 ---
 
+## Wishlist — Page `/compte/wishlist`
+
+**Résultat : PASS partiel** (2 bugs trouvés, 1 corrigé, 1 ouvert)
+
+**Date :** 29 avril 2026
+
+### Étapes testées
+
+1. Page liste : 2 articles affichés avec image, nom, prix, bouton "Ajouter au panier", bouton trash "Retirer de la liste" et lien vers la fiche produit ✓
+2. Clic trash → produit disparaît immédiatement, badge navbar favoris décrémenté (2→1) ✓
+3. Suppression du dernier article → état vide "Votre liste de souhaits est vide" + CTA "Commencer à magasiner" ✓
+4. Persistance après reload de page : articles toujours présents en base ✓
+5. Clic sur le nom du produit → navigation vers `/catalogue/[slug]` correcte ✓
+
+### Edge cases testés
+
+- **Accès sans connexion** → middleware redirige vers `/connexion?next=%2Fcompte%2Fwishlist` ✓
+- **Produit épuisé dans la wishlist** → produit affiché (non masqué) ✓ mais **pas de badge "Épuisé"** et bouton "Ajouter au panier" non désactivé ❌ (voir Bug #2)
+
+### Bugs trouvés
+
+**Bug #1 — Images `placehold.co` cassées (CORRIGÉ)**
+- **Fichier :** `app/(client)/compte/wishlist/page.tsx`
+- **Problème :** `<Image>` sans `unoptimized` → `/_next/image` retournait 400 sur les URLs `placehold.co`
+- **Fix :** Ajout de `unoptimized={!!item.product_image?.includes('placehold.co')}` ✅
+
+**Bug #2 — Pas de badge "Épuisé" pour les produits en rupture (OUVERT)**
+- **Fichier :** `app/(client)/compte/wishlist/page.tsx`, `contexts/cart-context.tsx`
+- **Problème :** `WishlistItem` ne contient pas de champ `stock` (requête `select('*')` sur la table `wishlist` qui ne joint pas le stock actuel). Le bouton "Ajouter au panier" reste actif et aucun badge "Épuisé" n'est affiché même pour un produit à stock=0.
+- **Correction nécessaire :** Ajouter `product_stock` dans la vue ou via join dans `fetchWishlist`, puis afficher un badge et désactiver le bouton si `product_stock === 0`.
+
+---
+
 ## Flows non testés (à couvrir)
 
 - [x] Packs — ajout au panier, prix distribué proportionnellement ✅
@@ -298,7 +332,7 @@
 
 ---
 
-- [ ] **Wishlist — page `/compte/wishlist`** *(HAUTE priorité)*
+- [x] **Wishlist — page `/compte/wishlist`** *(HAUTE priorité)* ⚠️ 29 avr. 2026 (1 bug ouvert)
 
   **Flow :** login → `/compte/wishlist` → suppression → rechargement
 
