@@ -106,7 +106,9 @@ export async function changerStatutReparation(
     return { error: "Données invalides." };
   }
 
-  const { error } = await authClient
+  // demandes_reparation revokes all from authenticated — service_role required
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
     .from("demandes_reparation")
     .update({ statut, notes_admin })
     .eq("id", id)
