@@ -93,6 +93,7 @@ export default function ProductCard({
           price: produit.price,
           image: imageUrl || '',
           slug: produit.slug,
+          stock: produit.stock,
         });
       }
     } catch (err: unknown) {

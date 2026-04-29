@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, ShoppingCart, Trash2, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -147,6 +148,11 @@ export default function WishlistPage() {
                         unoptimized={!!item.product_image?.includes('placehold.co')}
                       />
                     </Link>
+                    {item.product_stock === 0 && (
+                      <Badge variant="destructive" className="absolute top-2 left-2 text-xs">
+                        Épuisé
+                      </Badge>
+                    )}
                   </div>
                   <CardContent className="p-4">
                     <Link href={`/catalogue/${item.product_slug}`}>
@@ -162,14 +168,14 @@ export default function WishlistPage() {
                         className="flex-1"
                         size="sm"
                         onClick={() => handleMoveToCart(item.product_id)}
-                        disabled={processingItems.has(item.product_id)}
+                        disabled={item.product_stock === 0 || processingItems.has(item.product_id)}
                       >
                         {processingItems.has(item.product_id) ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
                           <ShoppingCart className="h-4 w-4 mr-2" />
                         )}
-                        Ajouter au panier
+                        {item.product_stock === 0 ? 'Indisponible' : 'Ajouter au panier'}
                       </Button>
                       <Button
                         variant="outline"

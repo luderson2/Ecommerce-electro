@@ -20,6 +20,7 @@ export interface WishlistItem {
   product_price: number
   product_image: string | null
   product_slug: string
+  product_stock: number
 }
 
 interface CartContextType {
@@ -33,7 +34,7 @@ interface CartContextType {
   removeFromCart: (productId: string) => Promise<void>
   updateCartQuantity: (productId: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
-  addToWishlist: (product: { id: string; name: string; price: number; image: string; slug: string }) => Promise<void>
+  addToWishlist: (product: { id: string; name: string; price: number; image: string; slug: string; stock: number }) => Promise<void>
   removeFromWishlist: (productId: string) => Promise<void>
   isInCart: (productId: string) => boolean
   isInWishlist: (productId: string) => boolean
@@ -93,7 +94,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const { data, error } = await withTimeout(
       supabase
         .from('wishlist')
-        .select('*')
+        .select('*, products(stock)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
     )
@@ -103,7 +104,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setWishlistItems(data as unknown as WishlistItem[] || [])
+    const items: WishlistItem[] = (data ?? []).map((row) => {
+      const { products, ...rest } = row as typeof row & { products: { stock: number } | null }
+      return {
+        ...rest,
+        product_name: rest.product_name ?? '',
+        product_price: rest.product_price ?? 0,
+        product_slug: rest.product_slug ?? '',
+        product_stock: products?.stock ?? 0,
+      }
+    })
+    setWishlistItems(items)
   }, [user, supabase])
 
   // Initial fetch
@@ -221,10 +232,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   
-  const addToWishlist = async (product: { id: string; name: string; price: number; image: string; slug: string }) => {
+  const addToWishlist = async (product: { id: string; name: string; price: number; image: string; slug: string; stock: number }) => {
     if (!user) return
 
-   
+
     if (isInWishlist(product.id)) return
 
     const { data, error } = await withTimeout(
@@ -248,7 +259,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     setWishlistItems(prev => [
-      data as unknown as WishlistItem,
+      { ...(data as Omit<WishlistItem, 'product_stock'>), product_stock: product.stock },
       ...prev.filter(item => item.product_id !== product.id),
     ])
   }
