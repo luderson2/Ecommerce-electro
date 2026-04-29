@@ -152,7 +152,7 @@ export default async function PackDetailPage({
         {/* Visuel */}
         <div className="relative aspect-square bg-surface rounded-xl border border-border overflow-hidden">
           {imageUrl ? (
-            <Image src={imageUrl} alt={pack.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-contain p-10" priority />
+            <Image src={imageUrl} alt={pack.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-contain p-10" priority unoptimized={imageUrl.includes("placehold.co")} />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-7xl">📦</span>
@@ -223,7 +223,7 @@ export default async function PackDetailPage({
                 <div key={p.id} className="border border-border rounded-lg overflow-hidden bg-white">
                   <div className="relative aspect-square bg-surface">
                     {imgUrl ? (
-                      <Image src={imgUrl} alt={p.name} fill sizes="(max-width: 640px) 100vw, 300px" className="object-contain p-4" />
+                      <Image src={imgUrl} alt={p.name} fill sizes="(max-width: 640px) 100vw, 300px" className="object-contain p-4" unoptimized={imgUrl.includes("placehold.co")} />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-3xl">📦</div>
                     )}

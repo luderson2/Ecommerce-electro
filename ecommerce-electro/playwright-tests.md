@@ -17,7 +17,8 @@
 | SAV + panel admin | 1 | 1/1 | ✅ PASS |
 | Catalogue + recherche + favoris | 0 | — | ✅ PASS |
 | Réparation + panel admin | 1 | 1/1 | ✅ PASS |
-| **Total** | **5** | **5/5** | ✅ |
+| Packs — navigation, détail, panier | 1 | 1/1 | ✅ PASS |
+| **Total** | **6** | **6/6** | ✅ |
 
 ---
 
@@ -167,9 +168,43 @@
 
 ---
 
+## Packs — Navigation, Détail et Ajout au Panier
+
+**Résultat : PASS** (après 1 fix, 1 comportement documenté)
+
+**Date :** 29 avril 2026
+
+### Étapes testées
+
+1. Page `/packs` : 2 packs actifs affichés (Duo LG Frontales, Cuisine Samsung), prix pack, nombre de produits, badge économies ✓
+2. Clic sur un pack → `/packs/[slug]` : titre, description, badge "-8 %", prix barré, liste de produits inclus, carte "Détail des prix" ✓
+3. JSON-LD `Product` + `isRelatedTo[]` présent et parsable sans erreur ✓
+4. Ajout au panier (utilisateur connecté) : les 2 produits du pack sont ajoutés individuellement avec les prix distribués proportionnellement ✓
+5. Vérification panier : noms et prix distribués corrects, total cohérent ✓
+
+**Scénario 5 — Pack avec un produit épuisé :**
+- Comportement réel : le bouton "Ajouter le pack au panier" reste **actif** lorsqu'un seul produit est épuisé sur deux.
+- Seuls les produits disponibles sont ajoutés ; message "Les produits disponibles du pack ont été ajoutés au panier." s'affiche après ajout.
+- Le bouton se désactive uniquement si **tous** les produits du pack sont épuisés (`availableProducts.length === 0`).
+- Comportement intentionnel dans `PackActions.tsx` — conforme au code, différent de ce qu'anticipait le test plan.
+
+### Edge cases testés
+
+- **Prix pack > somme des produits** : le badge "Économies" et le texte "Vous économisez" n'apparaissent pas (pas de valeur négative affichée). La logique `economie = totalOriginal > pack.price ? ... : 0` protège correctement ✓
+- **Pack inactif (`is_active = false`)** : URL directe `/packs/[slug]` → 404 "This page could not be found." ✓
+
+### Bug trouvé et corrigé
+
+**Bug #1 — Images `placehold.co` → 400 via `/_next/image`**
+- **Fichier :** `app/(front-office)/packs/[slug]/page.tsx`
+- **Problème :** Les composants `<Image>` avec des URLs `placehold.co` passaient par l'optimiseur Next.js qui retournait 400 (même pattern qu'en panier/checkout/comparateur).
+- **Fix :** Ajout de `unoptimized={imageUrl.includes("placehold.co")}` sur les deux `<Image>` de la page (visuel principal + grille produits inclus) ✅
+
+---
+
 ## Flows non testés (à couvrir)
 
-- [ ] Packs — ajout au panier, prix distribué proportionnellement
+- [x] Packs — ajout au panier, prix distribué proportionnellement ✅
 - [ ] Comparateur — ajout de produits, tableau de comparaison
 - [ ] Emails transactionnels end-to-end (Resend en mode test)
 - [ ] SMS Twilio (notifications réparation)
@@ -187,7 +222,7 @@
 
 ---
 
-- [ ] **Packs — navigation, détail et ajout au panier** *(CRITIQUE)*
+- [x] **Packs — navigation, détail et ajout au panier** *(CRITIQUE)* ✅ 29 avr. 2026
 
   **Flow :** `/packs` → `/packs/[slug]` → ajout au panier → vérification panier
 
