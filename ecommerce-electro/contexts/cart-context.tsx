@@ -10,6 +10,7 @@ export interface CartItem {
   product_name: string
   product_price: number
   product_image: string | null
+  product_slug: string
   quantity: number
 }
 
@@ -72,7 +73,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const { data, error } = await withTimeout(
       supabase
         .from('cart_items')
-        .select('*')
+        .select('*, products(slug)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
     )
@@ -82,7 +83,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setCartItems(data || [])
+    const items: CartItem[] = (data ?? []).map((row) => {
+      const { products, ...rest } = row as typeof row & { products: { slug: string } | null }
+      return { ...rest, product_slug: products?.slug ?? '' }
+    })
+    setCartItems(items)
   }, [user, supabase])
 
   const fetchWishlist = useCallback(async () => {
@@ -141,7 +146,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (existingItem) {
       await updateCartQuantity(product.id, existingItem.quantity + 1)
     } else {
-      const { data, error } = await withTimeout(
+      const { error } = await withTimeout(
         supabase
           .from('cart_items')
           .insert({
@@ -153,8 +158,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
             quantity: 1,
             updated_at: new Date().toISOString(),
           })
-          .select('*')
-          .single()
       )
 
       if (error) {
@@ -162,7 +165,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error(error.message)
       }
 
-      setCartItems(prev => [data as CartItem, ...prev])
+      await fetchCart()
     }
   }
 

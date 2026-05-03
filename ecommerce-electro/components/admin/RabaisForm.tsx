@@ -37,6 +37,7 @@ export default function RabaisForm({ produits, packs, rabais }: Props) {
   const [state, formAction, isPending] = useActionState(action, null);
 
   const [cibleType, setCibleType] = useState<"product" | "pack">(rabais?.cible_type ?? "product");
+  const [cibleId, setCibleId] = useState(rabais?.cible_id ?? "");
   const [sansDateFin, setSansDateFin] = useState(!rabais?.ends_at);
   const [isActive, setIsActive] = useState(rabais?.is_active ?? true);
 
@@ -67,7 +68,7 @@ export default function RabaisForm({ produits, packs, rabais }: Props) {
               name="cible_type"
               value="product"
               checked={cibleType === "product"}
-              onChange={() => setCibleType("product")}
+              onChange={() => { setCibleType("product"); setCibleId(""); }}
               className="sr-only"
             />
             <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -87,7 +88,7 @@ export default function RabaisForm({ produits, packs, rabais }: Props) {
               name="cible_type"
               value="pack"
               checked={cibleType === "pack"}
-              onChange={() => setCibleType("pack")}
+              onChange={() => { setCibleType("pack"); setCibleId(""); }}
               className="sr-only"
             />
             <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -102,15 +103,15 @@ export default function RabaisForm({ produits, packs, rabais }: Props) {
 
       {/* Sélecteur produit ou pack */}
       <div>
-        <label htmlFor="cible_id" className="block text-sm font-medium text-foreground mb-1.5">
+        <label htmlFor="cible_id_select" className="block text-sm font-medium text-foreground mb-1.5">
           {cibleType === "product" ? "Produit" : "Pack"} <span className="text-red-500">*</span>
         </label>
+        <input type="hidden" name="cible_id" value={cibleId} />
         {cibleType === "product" ? (
           <select
-            id="cible_id"
-            name="cible_id"
-            required
-            defaultValue={rabais?.cible_type === "product" ? rabais.cible_id : ""}
+            id="cible_id_select"
+            value={cibleId}
+            onChange={(e) => setCibleId(e.target.value)}
             className={inputClass}
           >
             <option value="">- Choisir un produit -</option>
@@ -122,10 +123,9 @@ export default function RabaisForm({ produits, packs, rabais }: Props) {
           </select>
         ) : (
           <select
-            id="cible_id"
-            name="cible_id"
-            required
-            defaultValue={rabais?.cible_type === "pack" ? rabais.cible_id : ""}
+            id="cible_id_select"
+            value={cibleId}
+            onChange={(e) => setCibleId(e.target.value)}
             className={inputClass}
           >
             <option value="">- Choisir un pack -</option>

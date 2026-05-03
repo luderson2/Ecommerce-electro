@@ -189,14 +189,14 @@ function CheckoutContent() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container mx-auto px-4 py-16 text-center">
+        <div className="container mx-auto px-4 py-16 text-center">
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Connexion requise</h2>
+          <h1 className="text-2xl font-bold mb-2">Connexion requise</h1>
           <p className="text-muted-foreground mb-6">Vous devez être connecté pour passer une commande.</p>
           <Button asChild>
             <Link href="/connexion">Se connecter</Link>
           </Button>
-        </main>
+        </div>
         <Footer />
       </div>
     )
@@ -206,14 +206,14 @@ function CheckoutContent() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container mx-auto px-4 py-16 text-center">
+        <div className="container mx-auto px-4 py-16 text-center">
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Votre panier est vide</h2>
+          <h1 className="text-2xl font-bold mb-2">Votre panier est vide</h1>
           <p className="text-muted-foreground mb-6">Ajoutez des produits avant de passer à la caisse.</p>
           <Button asChild>
             <Link href="/catalogue">Magasiner</Link>
           </Button>
-        </main>
+        </div>
         <Footer />
       </div>
     )
@@ -223,8 +223,8 @@ function CheckoutContent() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="container mx-auto px-4 py-8">
-        <SectionTitle title="Paiement" subtitle="Completez votre commande en toute securite" />
+      <div className="container mx-auto px-4 py-8">
+        <SectionTitle as="h1" title="Paiement" subtitle="Completez votre commande en toute securite" />
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
@@ -329,7 +329,13 @@ function CheckoutContent() {
                         }}
                         aria-invalid={Boolean(fieldErrors.postalCode)}
                       />
-                      <Button variant="outline" size="icon" onClick={checkPostalCode} type="button">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={checkPostalCode}
+                        type="button"
+                        aria-label="Vérifier la zone de livraison"
+                      >
                         <MapPin className="h-4 w-4" />
                       </Button>
                     </div>
@@ -513,7 +519,7 @@ function CheckoutContent() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       <Footer />
     </div>
@@ -525,9 +531,9 @@ export default function CheckoutPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container mx-auto px-4 py-16 text-center">
+        <div className="container mx-auto px-4 py-16 text-center">
           <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        </main>
+        </div>
         <Footer />
       </div>
     }>

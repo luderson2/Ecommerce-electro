@@ -13,7 +13,7 @@ type CommandeLigne = {
   status: OrderStatus;
   total_amount: number;
   created_at: string;
-  profiles: { first_name: string | null; last_name: string | null } | null;
+  profiles: { first_name: string | null; last_name: string | null; email: string | null } | null;
   order_items: {
     id: string;
     products: {
@@ -36,7 +36,7 @@ export default async function AdminCommandesPage({
     .from("orders")
     .select(`
       id, status, total_amount, created_at,
-      profiles(first_name, last_name),
+      profiles(first_name, last_name, email),
       order_items(id, products(product_images(url, sort_order)))
     `)
     .order("created_at", { ascending: false });
@@ -124,7 +124,9 @@ export default async function AdminCommandesPage({
             ) : (
               (commandes ?? []).map((commande) => {
                 const nbArticles = commande.order_items?.length ?? 0;
-                const client = [commande.profiles?.first_name, commande.profiles?.last_name].filter(Boolean).join(" ") || "Client inconnu";
+                const nomClient = [commande.profiles?.first_name, commande.profiles?.last_name].filter(Boolean).join(" ");
+                const emailClient = commande.profiles?.email ?? null;
+                const client = nomClient || emailClient || "Client inconnu";
                 const premierItem = commande.order_items?.[0];
                 const images = [...(premierItem?.products?.product_images ?? [])].sort(
                   (a, b) => a.sort_order - b.sort_order
@@ -165,8 +167,11 @@ export default async function AdminCommandesPage({
                     </td>
                     {/* Client */}
                     <td className="p-0">
-                      <Link href={`/admin/commandes/${commande.id}`} className="flex items-center px-4 py-3 font-medium text-foreground">
-                        {client}
+                      <Link href={`/admin/commandes/${commande.id}`} className="flex flex-col justify-center px-4 py-3">
+                        <span className="font-medium text-foreground">{client}</span>
+                        {emailClient && nomClient && (
+                          <span className="text-xs text-muted-foreground break-all">{emailClient}</span>
+                        )}
                       </Link>
                     </td>
                     {/* Date */}

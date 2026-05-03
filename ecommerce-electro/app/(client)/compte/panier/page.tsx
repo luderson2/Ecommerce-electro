@@ -66,7 +66,7 @@ export default function CartPage() {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
-        <main className="flex-1 container mx-auto px-4 py-16 text-center">
+        <div className="flex-1 container mx-auto px-4 py-16 text-center">
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-2">Connectez-vous pour voir votre panier</h1>
           <p className="text-muted-foreground mb-6">Identifiez-vous pour accéder à vos articles sauvegardés.</p>
@@ -74,7 +74,7 @@ export default function CartPage() {
             <Button asChild><Link href="/connexion">Connexion</Link></Button>
             <Button variant="outline" asChild><Link href="/inscription">Inscription</Link></Button>
           </div>
-        </main>
+        </div>
         <Footer />
       </div>
     )
@@ -84,10 +84,10 @@ export default function CartPage() {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2">Chargement du panier...</span>
-        </main>
+        </div>
         <Footer />
       </div>
     )
@@ -97,8 +97,9 @@ export default function CartPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <div className="flex-1 container mx-auto px-4 py-8">
         <SectionTitle
+          as="h1"
           title="Panier d'achat"
           subtitle={cartCount > 0 ? `${cartCount} article${cartCount !== 1 ? 's' : ''} dans votre panier` : undefined}
         />
@@ -138,8 +139,8 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <Link 
-                          href={`/catalogue/${item.product_id}`}
+                        <Link
+                          href={`/catalogue/${item.product_slug || item.product_id}`}
                           className="font-medium hover:text-primary transition-colors line-clamp-2"
                         >
                           {item.product_name}
@@ -151,6 +152,7 @@ export default function CartPage() {
                         <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-1">
                           <Button
                             variant="ghost" size="icon" className="h-7 w-7"
+                            aria-label={`Réduire la quantité de ${item.product_name}`}
                             onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
                             disabled={updatingItems.has(item.product_id) || item.quantity <= 1}
                           >
@@ -161,6 +163,7 @@ export default function CartPage() {
                           </span>
                           <Button
                             variant="ghost" size="icon" className="h-7 w-7"
+                            aria-label={`Augmenter la quantité de ${item.product_name}`}
                             onClick={() => handleQuantityChange(item.product_id, item.quantity + 1)}
                             disabled={updatingItems.has(item.product_id)}
                           >
@@ -223,7 +226,7 @@ export default function CartPage() {
             </div>
           </>
         )}
-      </main>
+      </div>
 
       <Footer />
     </div>

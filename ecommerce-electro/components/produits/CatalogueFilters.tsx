@@ -85,6 +85,7 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
         <button
           role="switch"
           aria-checked={filtresActifs.en_stock}
+          aria-label="Afficher seulement les produits en stock"
           onClick={() => updateParam("en_stock", filtresActifs.en_stock ? null : "1")}
           className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 ${
             filtresActifs.en_stock ? "bg-primary" : "bg-gray-200"

@@ -179,7 +179,7 @@ export default function AccountPage() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container mx-auto px-4 py-16 text-center">
+        <div className="container mx-auto px-4 py-16 text-center">
           <h1 className="text-2xl font-bold">Connexion requise</h1>
           <p className="mt-2 text-muted-foreground">
             Votre session n&apos;est pas disponible pour le moment.
@@ -187,7 +187,7 @@ export default function AccountPage() {
           <Button asChild className="mt-6">
             <Link href="/connexion?next=/compte/profil">Aller à la connexion</Link>
           </Button>
-        </main>
+        </div>
         <Footer />
       </div>
     )
@@ -201,7 +201,7 @@ export default function AccountPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Mon compte</h1>
           <p className="text-muted-foreground mt-1">Bon retour, {displayName} !</p>
@@ -232,21 +232,21 @@ export default function AccountPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Prénom</Label>
-                    <Input value={profile.firstName} onChange={(e) => updateField('firstName', e.target.value)} disabled={isSaving} />
+                    <Label htmlFor="profile-first-name">Prénom</Label>
+                    <Input id="profile-first-name" value={profile.firstName} onChange={(e) => updateField('firstName', e.target.value)} disabled={isSaving} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Nom</Label>
-                    <Input value={profile.lastName} onChange={(e) => updateField('lastName', e.target.value)} disabled={isSaving} />
+                    <Label htmlFor="profile-last-name">Nom</Label>
+                    <Input id="profile-last-name" value={profile.lastName} onChange={(e) => updateField('lastName', e.target.value)} disabled={isSaving} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Courriel (Non modifiable)</Label>
-                  <Input value={profile.email} disabled className="bg-muted" />
+                  <Label htmlFor="profile-email">Courriel (Non modifiable)</Label>
+                  <Input id="profile-email" value={profile.email} disabled className="bg-muted" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Téléphone</Label>
-                  <Input value={profile.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="+1 (514) 123-4567" disabled={isSaving} />
+                  <Label htmlFor="profile-phone">Téléphone</Label>
+                  <Input id="profile-phone" value={profile.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="+1 (514) 123-4567" disabled={isSaving} />
                 </div>
               </CardContent>
             </Card>
@@ -258,25 +258,25 @@ export default function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Adresse</Label>
-                  <Input value={profile.addressStreet} onChange={(e) => updateField('addressStreet', e.target.value)} placeholder="123 rue Principale" disabled={isSaving} />
+                  <Label htmlFor="profile-address-street">Adresse</Label>
+                  <Input id="profile-address-street" value={profile.addressStreet} onChange={(e) => updateField('addressStreet', e.target.value)} placeholder="123 rue Principale" disabled={isSaving} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Appartement, suite, etc. (optionnel)</Label>
-                  <Input value={profile.addressApartment} onChange={(e) => updateField('addressApartment', e.target.value)} placeholder="Apt 4B" disabled={isSaving} />
+                  <Label htmlFor="profile-address-apartment">Appartement, suite, etc. (optionnel)</Label>
+                  <Input id="profile-address-apartment" value={profile.addressApartment} onChange={(e) => updateField('addressApartment', e.target.value)} placeholder="Apt 4B" disabled={isSaving} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Ville</Label>
-                    <Input value={profile.addressCity} onChange={(e) => updateField('addressCity', e.target.value)} placeholder="Montréal" disabled={isSaving} />
+                    <Label htmlFor="profile-address-city">Ville</Label>
+                    <Input id="profile-address-city" value={profile.addressCity} onChange={(e) => updateField('addressCity', e.target.value)} placeholder="Montréal" disabled={isSaving} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Province</Label>
-                    <Input value={profile.addressProvince} onChange={(e) => updateField('addressProvince', e.target.value)} placeholder="Quebec" disabled={isSaving} />
+                    <Label htmlFor="profile-address-province">Province</Label>
+                    <Input id="profile-address-province" value={profile.addressProvince} onChange={(e) => updateField('addressProvince', e.target.value)} placeholder="Quebec" disabled={isSaving} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Code postal</Label>
-                    <Input value={profile.addressPostalCode} onChange={(e) => updateField('addressPostalCode', e.target.value.toUpperCase())} placeholder="H2X 1Y4" disabled={isSaving} />
+                    <Label htmlFor="profile-address-postal-code">Code postal</Label>
+                    <Input id="profile-address-postal-code" value={profile.addressPostalCode} onChange={(e) => updateField('addressPostalCode', e.target.value.toUpperCase())} placeholder="H2X 1Y4" disabled={isSaving} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
@@ -431,7 +431,7 @@ export default function AccountPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
       <Footer />
     </div>
   )

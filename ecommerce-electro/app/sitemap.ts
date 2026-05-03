@@ -32,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!supabase) return staticRoutes;
 
   const [{ data: products }, { data: packs }, { data: categories }] = await Promise.all([
-    supabase.from("products").select("slug, updated_at").eq("is_active", true),
+    supabase.from("products").select("slug, created_at").eq("is_active", true),
     supabase.from("packs").select("slug, created_at").eq("is_active", true),
     supabase.from("categories").select("slug, created_at"),
   ]);
@@ -41,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...(products ?? []).map((product) => ({
       url: `${baseUrl}/catalogue/${product.slug}`,
-      lastModified: product.updated_at ? new Date(product.updated_at) : now,
+      lastModified: product.created_at ? new Date(product.created_at) : now,
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),

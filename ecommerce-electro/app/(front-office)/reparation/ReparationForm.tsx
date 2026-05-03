@@ -67,7 +67,6 @@ export default function ReparationForm() {
               name="telephone"
               type="tel"
               placeholder="+1 (514) 123-4567"
-              pattern="[\d\s()+.-]{10,20}"
               required
               disabled={isPending}
             />

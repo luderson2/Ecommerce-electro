@@ -30,8 +30,9 @@ export async function generateMetadata({
 
   if (!produit) return { title: "Produit introuvable", robots: { index: false } };
 
-  const image = [...(produit.product_images ?? [])]
-    .sort((a, b) => a.sort_order - b.sort_order)[0]?.url;
+  const image =
+    [...(produit.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order)[0]?.url ??
+    "/og-default.svg";
 
   return {
     title: `${produit.name} - ${produit.brand}`,
@@ -45,7 +46,7 @@ export async function generateMetadata({
       title: `${produit.name} - ${produit.brand}`,
       description:
         produit.description ?? `Découvrez le ${produit.name} de ${produit.brand}.`,
-      ...(image ? { images: [{ url: image }] } : {}),
+      images: [{ url: image }],
     },
   };
 }

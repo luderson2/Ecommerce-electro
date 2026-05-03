@@ -5,12 +5,13 @@ interface SectionTitleProps {
   subtitle?: string
   className?: string
   align?: 'left' | 'center'
+  as?: 'h1' | 'h2'
 }
 
-export function SectionTitle({ title, subtitle, className, align = 'left' }: SectionTitleProps) {
+export function SectionTitle({ title, subtitle, className, align = 'left', as: Heading = 'h2' }: SectionTitleProps) {
   return (
     <div className={cn('mb-6', align === 'center' && 'text-center', className)}>
-      <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+      <Heading className="text-2xl font-semibold text-foreground">{title}</Heading>
       {subtitle && (
         <p className="mt-1 text-muted-foreground">{subtitle}</p>
       )}

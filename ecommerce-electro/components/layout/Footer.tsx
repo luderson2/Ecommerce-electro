@@ -29,7 +29,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-3">Boutique</h3>
+            <h2 className="font-semibold mb-3">Boutique</h2>
             <ul className="flex flex-col gap-2 text-sm text-white/75">
               {[
                 { href: "/categories/refrigeration", label: "Réfrigération" },
@@ -47,7 +47,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-3">Service client</h3>
+            <h2 className="font-semibold mb-3">Service client</h2>
             <ul className="flex flex-col gap-2 text-sm text-white/75">
               {[
                 { href: "/compte/sav", label: "Service après-vente" },
@@ -65,7 +65,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-3">Mon compte</h3>
+            <h2 className="font-semibold mb-3">Mon compte</h2>
             <ul className="flex flex-col gap-2 text-sm text-white/75">
               {[
                 { href: "/connexion", label: "Connexion" },

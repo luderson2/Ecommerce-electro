@@ -6,7 +6,7 @@
 :root {
   /* Palette ElectroMétropolitain */
   --primary-hex: #1a2e5a;
-  --accent-hex: #f47421;
+  --accent-hex: #c2410c;
   --surface-hex: #f4f5f7;
 
   --background: oklch(0.98 0 0);
@@ -22,8 +22,8 @@
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.96 0 0);
   --muted-foreground: oklch(0.45 0 0);
-  /* Orange #f47421 */
-  --accent: oklch(0.66 0.19 42);
+  /* Accessible orange #c2410c (AA contrast with white text and on white backgrounds) */
+  --accent: #c2410c;
   --accent-foreground: oklch(0.99 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0 0);
@@ -100,6 +100,9 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-green-600: #15803d;
+  --color-green-700: #166534;
+  --color-orange-500: #c2410c;
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);

@@ -47,6 +47,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       title: `${title} | ÉlectroMétropolitain`,
       description,
       type: "website",
+      images: [
+        {
+          url: "/og-default.svg",
+          width: 1200,
+          height: 630,
+          alt: `${category.name} - ÉlectroMétropolitain`,
+        },
+      ],
     },
   };
 }

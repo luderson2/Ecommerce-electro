@@ -155,14 +155,21 @@ export default async function AdminClientsPage({
                 const totalDepense = (profil.orders ?? [])
                   .filter((o) => o.status !== "annulee")
                   .reduce((sum, o) => sum + o.total_amount, 0);
+                const nomComplet = [profil.first_name, profil.last_name].filter(Boolean).join(" ");
+                const nomAffiche = nomComplet || profil.email || "-";
 
                 return (
                   <tr key={profil.id} className="hover:bg-surface/60 transition-colors">
                     {/* Nom */}
                     <td className="px-5 py-3">
                       <p className="font-medium text-foreground">
-                        {[profil.first_name, profil.last_name].filter(Boolean).join(" ") || profil.email || "-"}
+                        {nomAffiche}
                       </p>
+                      {profil.email && nomComplet && (
+                        <p className="text-xs text-muted-foreground mt-0.5 break-all">
+                          {profil.email}
+                        </p>
+                      )}
                       {profil.address_street && (
                         <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[200px]">
                           {[profil.address_street, profil.address_city].filter(Boolean).join(', ')}

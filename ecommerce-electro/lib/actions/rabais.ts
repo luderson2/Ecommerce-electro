@@ -7,7 +7,7 @@ import { verifierAdmin } from "./_guard";
 
 const rabaisSchema = z.object({
   cible_type: z.enum(["product", "pack"], { message: "Type de cible invalide" }),
-  cible_id: z.string().uuid("Veuillez sélectionner une cible valide"),
+  cible_id: z.string().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/, "Veuillez sélectionner une cible valide"),
   discount_type: z.literal("percentage"),
   value: z
     .number({ error: "La valeur doit être un nombre" })

@@ -12,7 +12,7 @@ export const produitSchema = z.object({
 
 export const alerteStockSchema = z.object({
   email: z.string().email("Adresse courriel invalide"),
-  product_id: z.string().uuid(),
+  product_id: z.string().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/, "Identifiant produit invalide"),
 });
 
 export type ProduitFormData = z.infer<typeof produitSchema>;
