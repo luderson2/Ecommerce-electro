@@ -50,8 +50,12 @@ export async function soumettreDemandeReparation(
 
   const { nom, telephone, appareil, description } = parsed.data;
   const headerStore = await headers();
-  const forwardedFor = headerStore.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0]?.trim() || headerStore.get("x-real-ip") || "unknown";
+  // x-real-ip is set by the trusted reverse proxy (Vercel) and cannot be spoofed by the client.
+  // x-forwarded-for is client-controllable (prepend a fake IP), so it is used only as a fallback.
+  const ip =
+    headerStore.get("x-real-ip") ||
+    headerStore.get("x-forwarded-for")?.split(",").at(-1)?.trim() ||
+    "unknown";
   const ip_hash = hashIp(ip);
   const user_agent = headerStore.get("user-agent");
   const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();

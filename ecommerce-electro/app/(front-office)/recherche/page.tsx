@@ -27,7 +27,9 @@ export async function generateMetadata({ searchParams }: RecherchePageProps): Pr
 export default async function RecherchePage({ searchParams }: RecherchePageProps) {
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
-  const safeQuery = query.replace(/[%_,]/g, " ");
+  // Strip characters that are special in PostgREST filter strings to prevent injection.
+  // Parentheses group or() conditions; commas separate them; %_  are LIKE wildcards.
+  const safeQuery = query.replace(/[%_,()\[\]]/g, " ").trim();
   const supabase = await createClient();
 
   const { data: produits } = query

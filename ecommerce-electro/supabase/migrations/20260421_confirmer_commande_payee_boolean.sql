@@ -1,5 +1,8 @@
 -- Retourne true si la commande vient d'être confirmée, false si elle était déjà payée.
 -- Permet au code appelant de ne pas renvoyer l'email de confirmation sur un retry.
+-- DROP requis car CREATE OR REPLACE ne peut pas changer le type de retour (void → boolean).
+drop function if exists public.confirmer_commande_payee(uuid, text, text);
+
 create or replace function public.confirmer_commande_payee(
   p_order_id uuid,
   p_stripe_session_id text,

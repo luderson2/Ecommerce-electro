@@ -29,7 +29,7 @@ export async function changerStatutLivraison(
 
   const update: Record<string, unknown> = { status: statut };
   if (scheduledDate) update.scheduled_date = scheduledDate;
-  update.delivered_at = statut === "livree" ? new Date().toISOString() : null;
+  if (statut === "livree") update.delivered_at = new Date().toISOString();
   if (notes !== null) update.notes = notes || null;
 
   const { data: livraison, error: fetchError } = await supabase

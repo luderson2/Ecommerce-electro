@@ -18,15 +18,6 @@ interface ShippingAddress {
   country: string
 }
 
-type OrderShippingAddress = {
-  shipping_address_street: string | null
-  shipping_address_apartment: string | null
-  shipping_address_city: string | null
-  shipping_address_province: string | null
-  shipping_address_postal_code: string | null
-  shipping_address_country: string | null
-}
-
 export async function createCheckoutSessionForUser(
   cartItems: CartItem[],
   deliveryMode?: DeliveryMode,
@@ -110,10 +101,92 @@ export async function createCheckoutSessionForUser(
     }
   }
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + productMap[item.product_id].price * item.quantity,
-    0
-  )
+  // --- Discounts (#1 product discounts, #2 pack discounts) ---
+
+  const now = new Date().toISOString()
+
+  // Fetch all active percentage discounts (product-level and pack-level)
+  const { data: activeDiscounts } = await supabase
+    .from('discounts')
+    .select('product_id, pack_id, discount_type, value')
+    .eq('is_active', true)
+    .eq('discount_type', 'percentage')
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gte.${now}`)
+
+  const productDiscountMap: Record<string, number> = {}
+  const tablePackDiscountMap: Record<string, number> = {}
+  for (const d of activeDiscounts ?? []) {
+    if (d.product_id) productDiscountMap[d.product_id] = d.value
+    if (d.pack_id) tablePackDiscountMap[d.pack_id] = d.value
+  }
+
+  // Compute pack-level effective prices (applies when ALL products of a pack are in the cart)
+  const packEffectivePrices: Record<string, number> = {}
+
+  const { data: packMemberships } = await supabase
+    .from('pack_products')
+    .select('pack_id, product_id')
+    .in('product_id', productIds)
+
+  if (packMemberships && packMemberships.length > 0) {
+    const uniquePackIds = [...new Set(packMemberships.map((m) => m.pack_id))]
+
+    const [{ data: allPackMembers }, { data: packPrices }] = await Promise.all([
+      supabase
+        .from('pack_products')
+        .select('pack_id, product_id')
+        .in('pack_id', uniquePackIds),
+      supabase
+        .from('packs')
+        .select('id, price')
+        .in('id', uniquePackIds)
+        .eq('is_active', true),
+    ])
+
+    const fullPackMembers: Record<string, string[]> = {}
+    for (const m of allPackMembers ?? []) {
+      if (!fullPackMembers[m.pack_id]) fullPackMembers[m.pack_id] = []
+      fullPackMembers[m.pack_id].push(m.product_id)
+    }
+
+    const cartSet = new Set(productIds)
+    for (const pack of packPrices ?? []) {
+      const members = fullPackMembers[pack.id] ?? []
+      // Only apply pack price if every product in the pack is in this order
+      if (members.length > 0 && members.every((pid) => cartSet.has(pid))) {
+        const sumOriginal = members.reduce((s, pid) => s + (productMap[pid]?.price ?? 0), 0)
+        let effectivePackPrice = Math.min(pack.price, sumOriginal)
+        // Stack any additional explicit discount from the discounts table
+        const extraPct = tablePackDiscountMap[pack.id]
+        if (extraPct) {
+          effectivePackPrice = Math.round(effectivePackPrice * (1 - extraPct / 100) * 100) / 100
+        }
+        if (effectivePackPrice < sumOriginal && sumOriginal > 0) {
+          const ratio = effectivePackPrice / sumOriginal
+          for (const pid of members) {
+            packEffectivePrices[pid] = Math.round((productMap[pid]?.price ?? 0) * ratio * 100) / 100
+          }
+        }
+      }
+    }
+  }
+
+  // Effective price: pack price (pro-rated) > product discount > base price
+  const getEffectivePrice = (productId: string): number => {
+    if (packEffectivePrices[productId] !== undefined) {
+      return packEffectivePrices[productId]
+    }
+    const base = productMap[productId].price
+    const pct = productDiscountMap[productId]
+    return pct != null ? Math.round(base * (1 - pct / 100) * 100) / 100 : base
+  }
+
+  // --- End discounts ---
+
+  const subtotal = Math.round(
+    cartItems.reduce((sum, item) => sum + getEffectivePrice(item.product_id) * item.quantity, 0) * 100
+  ) / 100
   const tax = Math.round(subtotal * 0.14975 * 100) / 100
 
   const SHIPPING_COSTS: Record<DeliveryMode, number> = {
@@ -161,7 +234,7 @@ export async function createCheckoutSessionForUser(
     order_id: order.id,
     product_id: item.product_id,
     quantity: item.quantity,
-    unit_price: productMap[item.product_id].price,
+    unit_price: getEffectivePrice(item.product_id),
     product_name: productMap[item.product_id].name,
     product_image: imageMap[item.product_id] ?? null,
     product_slug: slugMap[item.product_id] ?? null,
@@ -184,7 +257,7 @@ export async function createCheckoutSessionForUser(
         name: productMap[item.product_id].name,
         ...(imageMap[item.product_id] ? { images: [encodeURI(imageMap[item.product_id])] } : {}),
       },
-      unit_amount: Math.round(productMap[item.product_id].price * 100),
+      unit_amount: Math.round(getEffectivePrice(item.product_id) * 100),
     },
     quantity: item.quantity,
   }))
@@ -278,33 +351,16 @@ export async function confirmOrderForUser(orderId: string, sessionId: string) {
 
   await confirmerCommandePayeeDepuisSession(session, orderId, user.id)
 
-  const { data: updatedOrder, error: orderError } = await supabase
+  // Verify order ownership after confirmation
+  const { error: verifyError } = await supabase
     .from('orders')
-    .select(
-      'shipping_address_street, shipping_address_apartment, shipping_address_city, ' +
-      'shipping_address_province, shipping_address_postal_code, shipping_address_country'
-    )
+    .select('id')
     .eq('id', orderId)
     .eq('user_id', user.id)
     .single()
-    .returns<OrderShippingAddress>()
 
-  if (orderError || !updatedOrder) {
+  if (verifyError) {
     throw new Error('Commande introuvable apres paiement')
-  }
-
-  if (updatedOrder.shipping_address_street) {
-    await supabase
-      .from('profiles')
-      .update({
-        address_street: updatedOrder.shipping_address_street,
-        address_apartment: updatedOrder.shipping_address_apartment,
-        address_city: updatedOrder.shipping_address_city,
-        address_province: updatedOrder.shipping_address_province,
-        address_postal_code: updatedOrder.shipping_address_postal_code,
-        address_country: updatedOrder.shipping_address_country,
-      })
-      .eq('id', user.id)
   }
 
   // Supprimer uniquement les articles commandés, pas tout le panier

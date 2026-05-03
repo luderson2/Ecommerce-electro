@@ -57,6 +57,7 @@ export async function sInscrire(
   const parsed = inscriptionSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     phone: formData.get("phone") ?? "",

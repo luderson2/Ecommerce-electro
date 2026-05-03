@@ -220,6 +220,7 @@ export default function InscriptionPage() {
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="confirmPassword"
+                    name="confirmPassword"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     placeholder="Confirmez votre mot de passe"
