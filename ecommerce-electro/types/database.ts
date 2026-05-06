@@ -32,13 +32,21 @@ export type Database = {
           stock: number;
           is_active: boolean;
           specs: Record<string, string>;
+          washer_type: "reguliere" | "frontale" | null;
+          stove_type: "ceramique" | "serpentin" | null;
+          finish: "stainless" | "blanc" | "noir" | null;
           created_at: string;
           updated_at: string;
         };
         Insert: Omit<
           Database["public"]["Tables"]["products"]["Row"],
-          "id" | "created_at" | "updated_at" | "specs"
-        > & { specs?: Record<string, string> };
+          "id" | "created_at" | "updated_at" | "specs" | "washer_type" | "stove_type" | "finish"
+        > & {
+          specs?: Record<string, string>;
+          washer_type?: "reguliere" | "frontale" | null;
+          stove_type?: "ceramique" | "serpentin" | null;
+          finish?: "stainless" | "blanc" | "noir" | null;
+        };
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
         Relationships: [];
       };
@@ -186,10 +194,16 @@ export type Database = {
       demandes_reparation: {
         Row: {
           id: string;
+          prenom: string | null;
           nom: string;
           telephone: string;
+          email: string | null;
+          type_appareil: string | null;
+          marque: string | null;
+          modele: string | null;
           appareil: string;
           description: string;
+          disponibilites: string | null;
           statut: "nouveau" | "contacte" | "en_cours" | "termine" | "annule";
           ip_hash: string | null;
           user_agent: string | null;
@@ -199,12 +213,30 @@ export type Database = {
         };
         Insert: Omit<
           Database["public"]["Tables"]["demandes_reparation"]["Row"],
-          "id" | "created_at" | "updated_at" | "statut" | "ip_hash" | "user_agent" | "notes_admin"
+          | "id"
+          | "created_at"
+          | "updated_at"
+          | "statut"
+          | "ip_hash"
+          | "user_agent"
+          | "notes_admin"
+          | "prenom"
+          | "email"
+          | "type_appareil"
+          | "marque"
+          | "modele"
+          | "disponibilites"
         > & {
           statut?: Database["public"]["Tables"]["demandes_reparation"]["Row"]["statut"];
           ip_hash?: string | null;
           user_agent?: string | null;
           notes_admin?: string | null;
+          prenom?: string | null;
+          email?: string | null;
+          type_appareil?: string | null;
+          marque?: string | null;
+          modele?: string | null;
+          disponibilites?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["demandes_reparation"]["Insert"]>;
         Relationships: [];

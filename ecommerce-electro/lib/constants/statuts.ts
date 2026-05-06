@@ -13,10 +13,10 @@ export const ORDER_STATUTS: { value: OrderStatus | "tous"; label: string }[] = [
 ];
 
 export const ORDER_BADGE: Record<OrderStatus, string> = {
-  en_attente:    "bg-yellow-100 text-yellow-800",
-  payee:         "bg-blue-100 text-blue-800",
-  en_preparation:"bg-purple-100 text-purple-800",
-  livraison:     "bg-orange-100 text-orange-800",
+  en_attente:    "bg-neutral-100 text-neutral-800",
+  payee:         "bg-burgundy-100 text-burgundy-800",
+  en_preparation:"bg-burgundy-50 text-burgundy-800",
+  livraison:     "bg-burgundy-100 text-burgundy-800",
   livree:        "bg-green-100 text-green-800",
   annulee:       "bg-red-100 text-red-800",
 };
@@ -41,8 +41,8 @@ export const DELIVERY_STATUTS: { value: DeliveryStatus | "tous"; label: string }
 ];
 
 export const DELIVERY_BADGE: Record<DeliveryStatus, string> = {
-  planifiee:  "bg-blue-100 text-blue-800",
-  en_transit: "bg-orange-100 text-orange-800",
+  planifiee:  "bg-burgundy-100 text-burgundy-800",
+  en_transit: "bg-burgundy-50 text-burgundy-800",
   livree:     "bg-green-100 text-green-800",
   echec:      "bg-red-100 text-red-800",
 };
@@ -65,8 +65,8 @@ export const SAV_STATUTS: { value: SavStatus | "tous"; label: string }[] = [
 ];
 
 export const SAV_BADGE: Record<SavStatus, string> = {
-  ouvert:   "bg-yellow-100 text-yellow-800",
-  en_cours: "bg-blue-100 text-blue-800",
+  ouvert:   "bg-neutral-100 text-neutral-800",
+  en_cours: "bg-burgundy-100 text-burgundy-800",
   resolu:   "bg-green-100 text-green-800",
   ferme:    "bg-gray-100 text-gray-600",
 };
@@ -90,9 +90,9 @@ export const REPARATION_STATUTS: { value: ReparationStatus | "tous"; label: stri
 ];
 
 export const REPARATION_BADGE: Record<ReparationStatus, string> = {
-  nouveau:  "bg-yellow-100 text-yellow-800",
-  contacte: "bg-blue-100 text-blue-800",
-  en_cours: "bg-purple-100 text-purple-800",
+  nouveau:  "bg-neutral-100 text-neutral-800",
+  contacte: "bg-burgundy-100 text-burgundy-800",
+  en_cours: "bg-burgundy-50 text-burgundy-800",
   termine:  "bg-green-100 text-green-800",
   annule:   "bg-gray-100 text-gray-600",
 };

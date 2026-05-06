@@ -9,12 +9,19 @@ interface Categorie {
   slug: string;
 }
 
+type WasherType = "reguliere" | "frontale";
+type StoveType = "ceramique" | "serpentin";
+type Finish = "stainless" | "blanc" | "noir";
+
 interface FiltresActifs {
   categorie?: string;
   marque?: string;
   prix_min?: string;
   prix_max?: string;
   en_stock: boolean;
+  washer_type?: WasherType;
+  stove_type?: StoveType;
+  finish?: Finish;
 }
 
 interface Props {
@@ -22,6 +29,25 @@ interface Props {
   marques: string[];
   filtresActifs: FiltresActifs;
 }
+
+const WASHER_OPTIONS: { value: WasherType; label: string }[] = [
+  { value: "reguliere", label: "Régulière" },
+  { value: "frontale", label: "Frontale" },
+];
+
+const STOVE_OPTIONS: { value: StoveType; label: string }[] = [
+  { value: "ceramique", label: "Céramique" },
+  { value: "serpentin", label: "Serpentin" },
+];
+
+const FINISH_OPTIONS: { value: Finish; label: string }[] = [
+  { value: "stainless", label: "Stainless" },
+  { value: "blanc", label: "Blanc" },
+  { value: "noir", label: "Noir" },
+];
+
+const CATEGORIE_LAVEUSES = "laveuses-secheuses";
+const CATEGORIE_CUISINIERES = "cuisinieres-fours";
 
 export default function CatalogueFilters({ categories, marques, filtresActifs }: Props) {
   const router = useRouter();
@@ -50,6 +76,9 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
     params.delete("prix_min");
     params.delete("prix_max");
     params.delete("en_stock");
+    params.delete("washer_type");
+    params.delete("stove_type");
+    params.delete("finish");
     startTransition(() => {
       router.push(`/catalogue?${params.toString()}`, { scroll: false });
     });
@@ -60,8 +89,14 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
     filtresActifs.marque ||
     filtresActifs.prix_min ||
     filtresActifs.prix_max ||
-    filtresActifs.en_stock
+    filtresActifs.en_stock ||
+    filtresActifs.washer_type ||
+    filtresActifs.stove_type ||
+    filtresActifs.finish
   );
+
+  const showWasher = filtresActifs.categorie === CATEGORIE_LAVEUSES;
+  const showStove = filtresActifs.categorie === CATEGORIE_CUISINIERES;
 
   return (
     <div className={`bg-white rounded-lg border border-border p-5 space-y-5 transition-opacity ${isPending ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
@@ -168,6 +203,97 @@ export default function CatalogueFilters({ categories, marques, filtresActifs }:
           </ul>
         </div>
       )}
+
+      {/* Type de laveuse/sécheuse - uniquement dans la catégorie Laveuses & Sécheuses */}
+      {showWasher && (
+        <div className="border-t border-border pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Type de chargement
+          </h3>
+          <ul className="space-y-2">
+            {WASHER_OPTIONS.map((opt) => (
+              <li key={opt.value}>
+                <label className="flex items-center gap-2.5 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={filtresActifs.washer_type === opt.value}
+                    onChange={() =>
+                      updateParam(
+                        "washer_type",
+                        filtresActifs.washer_type === opt.value ? null : opt.value
+                      )
+                    }
+                    className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                    {opt.label}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Type de cuisinière - uniquement dans la catégorie Cuisinières & Fours */}
+      {showStove && (
+        <div className="border-t border-border pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Type de plaque
+          </h3>
+          <ul className="space-y-2">
+            {STOVE_OPTIONS.map((opt) => (
+              <li key={opt.value}>
+                <label className="flex items-center gap-2.5 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={filtresActifs.stove_type === opt.value}
+                    onChange={() =>
+                      updateParam(
+                        "stove_type",
+                        filtresActifs.stove_type === opt.value ? null : opt.value
+                      )
+                    }
+                    className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                    {opt.label}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Finition - toutes catégories */}
+      <div className="border-t border-border pt-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Finition
+        </h3>
+        <ul className="space-y-2">
+          {FINISH_OPTIONS.map((opt) => (
+            <li key={opt.value}>
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={filtresActifs.finish === opt.value}
+                  onChange={() =>
+                    updateParam(
+                      "finish",
+                      filtresActifs.finish === opt.value ? null : opt.value
+                    )
+                  }
+                  className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                  {opt.label}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Prix */}
       <div className="border-t border-border pt-4">

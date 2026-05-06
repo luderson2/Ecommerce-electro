@@ -8,6 +8,9 @@ export const produitSchema = z.object({
   brand: z.string().min(1, "La marque est requise"),
   stock: z.number().int().min(0, "Le stock ne peut pas être négatif"),
   is_active: z.boolean().default(true),
+  washer_type: z.enum(["reguliere", "frontale"]).nullable().optional(),
+  stove_type: z.enum(["ceramique", "serpentin"]).nullable().optional(),
+  finish: z.enum(["stainless", "blanc", "noir"]).nullable().optional(),
 });
 
 export const alerteStockSchema = z.object({

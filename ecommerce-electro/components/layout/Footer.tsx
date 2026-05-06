@@ -56,6 +56,7 @@ export default function Footer() {
                 { href: "/comparateur", label: "Comparer des produits" },
                 { href: "/livraison-retours", label: "Livraison et retours" },
                 { href: "/garantie", label: "Garantie" },
+                { href: "/faq", label: "FAQ" },
               ].map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href} className="hover:text-white transition-colors">{label}</Link>

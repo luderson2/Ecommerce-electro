@@ -23,8 +23,15 @@ interface SearchParams {
   prix_min?: string;
   prix_max?: string;
   en_stock?: string;
+  washer_type?: string;
+  stove_type?: string;
+  finish?: string;
   tri?: string;
 }
+
+const WASHER_TYPES = ["reguliere", "frontale"] as const;
+const STOVE_TYPES = ["ceramique", "serpentin"] as const;
+const FINISHES = ["stainless", "blanc", "noir"] as const;
 
 async function getCatalogueData(params: SearchParams) {
   const supabase = await createClient();
@@ -73,6 +80,16 @@ async function getCatalogueData(params: SearchParams) {
   if (params.prix_max && isFinite(prixMax)) query = query.lte("price", prixMax);
   if (params.en_stock === "1") query = query.gt("stock", 0);
 
+  if (params.washer_type && (WASHER_TYPES as readonly string[]).includes(params.washer_type)) {
+    query = query.eq("washer_type", params.washer_type as (typeof WASHER_TYPES)[number]);
+  }
+  if (params.stove_type && (STOVE_TYPES as readonly string[]).includes(params.stove_type)) {
+    query = query.eq("stove_type", params.stove_type as (typeof STOVE_TYPES)[number]);
+  }
+  if (params.finish && (FINISHES as readonly string[]).includes(params.finish)) {
+    query = query.eq("finish", params.finish as (typeof FINISHES)[number]);
+  }
+
   switch (params.tri) {
     case "prix_asc":
       query = query.order("price", { ascending: true });
@@ -107,6 +124,15 @@ export default async function CataloguePage({
     prix_min: params.prix_min,
     prix_max: params.prix_max,
     en_stock: params.en_stock === "1",
+    washer_type: (WASHER_TYPES as readonly string[]).includes(params.washer_type ?? "")
+      ? (params.washer_type as (typeof WASHER_TYPES)[number])
+      : undefined,
+    stove_type: (STOVE_TYPES as readonly string[]).includes(params.stove_type ?? "")
+      ? (params.stove_type as (typeof STOVE_TYPES)[number])
+      : undefined,
+    finish: (FINISHES as readonly string[]).includes(params.finish ?? "")
+      ? (params.finish as (typeof FINISHES)[number])
+      : undefined,
   };
 
   return (

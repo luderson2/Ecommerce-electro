@@ -5,7 +5,10 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { envoyerSmsProprio } from "@/lib/sms/twilio";
-import { demandeReparationSchema } from "@/lib/validations/reparation";
+import {
+  demandeReparationSchema,
+  TYPES_APPAREILS_LABELS,
+} from "@/lib/validations/reparation";
 import type { ReparationStatus } from "@/types";
 import { verifierAdmin } from "./_guard";
 
@@ -37,10 +40,15 @@ export async function soumettreDemandeReparation(
   }
 
   const parsed = demandeReparationSchema.safeParse({
+    prenom: formData.get("prenom"),
     nom: formData.get("nom"),
     telephone: formData.get("telephone"),
-    appareil: formData.get("appareil"),
+    email: formData.get("email"),
+    type_appareil: formData.get("type_appareil"),
+    marque: formData.get("marque"),
+    modele: formData.get("modele"),
     description: formData.get("description"),
+    disponibilites: formData.get("disponibilites"),
     website,
   });
 
@@ -48,7 +56,19 @@ export async function soumettreDemandeReparation(
     return { error: parsed.error.issues[0]?.message ?? "Données invalides." };
   }
 
-  const { nom, telephone, appareil, description } = parsed.data;
+  const {
+    prenom,
+    nom,
+    telephone,
+    email,
+    type_appareil,
+    marque,
+    modele,
+    description,
+    disponibilites,
+  } = parsed.data;
+  // Pour rétro-compat avec les colonnes existantes (NOT NULL)
+  const appareil = `${TYPES_APPAREILS_LABELS[type_appareil]} ${marque} ${modele}`.trim();
   const headerStore = await headers();
   // x-real-ip is set by the trusted reverse proxy (Vercel) and cannot be spoofed by the client.
   // x-forwarded-for is client-controllable (prepend a fake IP), so it is used only as a fallback.
@@ -77,7 +97,20 @@ export async function soumettreDemandeReparation(
 
   const { data, error } = await supabase
     .from("demandes_reparation")
-    .insert({ nom, telephone, appareil, description, ip_hash, user_agent })
+    .insert({
+      prenom,
+      nom,
+      telephone,
+      email,
+      type_appareil,
+      marque,
+      modele,
+      appareil,
+      description,
+      disponibilites: disponibilites ?? null,
+      ip_hash,
+      user_agent,
+    })
     .select("id")
     .single();
 
@@ -86,7 +119,17 @@ export async function soumettreDemandeReparation(
   }
 
   try {
-    await envoyerSmsProprio({ nom, telephone, appareil, description });
+    await envoyerSmsProprio({
+      prenom,
+      nom,
+      telephone,
+      email,
+      type_appareil: TYPES_APPAREILS_LABELS[type_appareil],
+      marque,
+      modele,
+      description,
+      disponibilites,
+    });
   } catch (errorSms) {
     console.error("[reparation] échec SMS Twilio:", errorSms);
   }

@@ -1,4 +1,5 @@
 ﻿import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Garantie",
@@ -21,6 +22,13 @@ export default function GarantiePage() {
           Notre équipe peut vous accompagner pour ouvrir une demande de service après-vente.
         </p>
       </div>
+      <p className="mt-8 text-sm text-muted-foreground">
+        Vous avez d&apos;autres questions ? Consultez la{" "}
+        <Link href="/faq" className="font-medium text-primary hover:underline">
+          foire aux questions
+        </Link>
+        .
+      </p>
     </div>
   );
 }

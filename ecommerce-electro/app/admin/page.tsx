@@ -20,9 +20,9 @@ const statutLabels: Record<OrderStatus, string> = {
 };
 
 const statutStyles: Record<OrderStatus, string> = {
-  en_attente: "bg-orange-100 text-orange-700",
-  payee: "bg-blue-100 text-blue-700",
-  en_preparation: "bg-purple-100 text-purple-700",
+  en_attente: "bg-neutral-100 text-neutral-800",
+  payee: "bg-burgundy-100 text-burgundy-800",
+  en_preparation: "bg-burgundy-50 text-burgundy-800",
   livraison: "bg-cyan-100 text-cyan-700",
   livree: "bg-green-100 text-green-700",
   annulee: "bg-red-100 text-red-700",
@@ -217,12 +217,12 @@ export default async function AdminDashboardPage() {
 
       {/* Alertes stock bas */}
       {stockBas && stockBas.length > 0 && (
-        <div className="mt-6 bg-white rounded-lg border border-orange-200">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-orange-200 bg-orange-50/40 rounded-t-lg">
-            <AlertTriangle size={16} className="text-orange-600 shrink-0" />
+        <div className="mt-6 bg-white rounded-lg border border-burgundy-200">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-burgundy-200 bg-burgundy-50/40 rounded-t-lg">
+            <AlertTriangle size={16} className="text-burgundy-700 shrink-0" />
             <h2 className="font-semibold text-foreground">
               Stock bas
-              <span className="ml-2 text-xs font-normal text-orange-600">
+              <span className="ml-2 text-xs font-normal text-burgundy-700">
                 ({stockBas.length} produit{stockBas.length > 1 ? "s" : ""} â‰¤ {SEUIL_STOCK_BAS} unités)
               </span>
             </h2>
@@ -244,7 +244,7 @@ export default async function AdminDashboardPage() {
                   className={`ml-4 shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold tabular-nums ${
                     produit.stock === 0
                       ? "bg-red-100 text-red-700"
-                      : "bg-orange-100 text-orange-700"
+                      : "bg-burgundy-100 text-burgundy-800"
                   }`}
                 >
                   {produit.stock === 0 ? "Rupture" : `${produit.stock} restant${produit.stock > 1 ? "s" : ""}`}

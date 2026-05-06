@@ -10,7 +10,7 @@ export default function Hero() {
                 <h1 className="text-6xl font-bold mb-4 text-white">Bienvenue chez ElectroMétropolitain</h1>
                 <p className="text-lg text-white/70 mb-6">Votre destination électroménagers au Québec</p>
                 <Link href="/catalogue">
-                    <Button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6 text-lg rounded-xl">
+                    <Button className="bg-accent hover:bg-burgundy-700 text-white px-8 py-6 text-lg rounded-xl">
   Magasiner maintenant
 </Button>
                 </Link>

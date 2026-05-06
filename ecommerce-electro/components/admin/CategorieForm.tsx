@@ -86,7 +86,7 @@ export default function CategorieForm({ categorie }: { categorie?: CategorieInit
         <button
           type="submit"
           disabled={isPending}
-          className="bg-primary text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          className="bg-primary text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {isPending
             ? "Enregistrement…"

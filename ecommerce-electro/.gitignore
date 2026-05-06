@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/.playwright-mcp/
+burgundy-black-home.png
 
 # next.js
 /.next/

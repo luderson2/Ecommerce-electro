@@ -2,7 +2,16 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, MessageSquare, Phone, StickyNote, Wrench } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronRight,
+  Mail,
+  MessageSquare,
+  Package,
+  Phone,
+  StickyNote,
+  Wrench,
+} from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDateLong } from "@/lib/utils";
 import { REPARATION_BADGE, REPARATION_LABEL } from "@/lib/constants/statuts";
@@ -11,15 +20,33 @@ import ReparationStatusForm from "./ReparationStatusForm";
 
 type DemandeReparationDetail = {
   id: string;
+  prenom: string | null;
   nom: string;
   telephone: string;
+  email: string | null;
+  type_appareil: string | null;
+  marque: string | null;
+  modele: string | null;
   appareil: string;
   description: string;
+  disponibilites: string | null;
   statut: ReparationStatus;
   user_agent: string | null;
   notes_admin: string | null;
   created_at: string;
   updated_at: string;
+};
+
+const TYPES_LABELS: Record<string, string> = {
+  refrigerateur: "Réfrigérateur",
+  congelateur: "Congélateur",
+  laveuse: "Laveuse",
+  secheuse: "Sécheuse",
+  "lave-vaisselle": "Lave-vaisselle",
+  cuisiniere: "Cuisinière",
+  four: "Four",
+  "micro-ondes": "Micro-ondes",
+  autre: "Autre",
 };
 
 export default async function AdminReparationDetailPage({
@@ -33,12 +60,15 @@ export default async function AdminReparationDetailPage({
   const { data: demande } = await supabase
     .from("demandes_reparation")
     .select(
-      "id, nom, telephone, appareil, description, statut, user_agent, notes_admin, created_at, updated_at"
+      "id, prenom, nom, telephone, email, type_appareil, marque, modele, appareil, description, disponibilites, statut, user_agent, notes_admin, created_at, updated_at"
     )
     .eq("id", id)
     .single<DemandeReparationDetail>();
 
   if (!demande) notFound();
+
+  const nomComplet = [demande.prenom, demande.nom].filter(Boolean).join(" ") || demande.nom;
+  const typeLabel = demande.type_appareil ? TYPES_LABELS[demande.type_appareil] ?? demande.type_appareil : null;
 
   return (
     <div className="w-full">
@@ -70,6 +100,29 @@ export default async function AdminReparationDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-6">
+          {(typeLabel || demande.marque || demande.modele) && (
+            <div className="overflow-hidden rounded-lg border border-border bg-white">
+              <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+                <Package size={16} className="text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground">Appareil</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-4 px-5 py-4 text-sm sm:grid-cols-3">
+                <div>
+                  <p className="mb-0.5 text-xs text-muted-foreground">Type</p>
+                  <p className="font-medium text-foreground">{typeLabel ?? "-"}</p>
+                </div>
+                <div>
+                  <p className="mb-0.5 text-xs text-muted-foreground">Marque</p>
+                  <p className="font-medium text-foreground">{demande.marque ?? "-"}</p>
+                </div>
+                <div>
+                  <p className="mb-0.5 text-xs text-muted-foreground">Modèle</p>
+                  <p className="font-medium text-foreground">{demande.modele ?? "-"}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="overflow-hidden rounded-lg border border-border bg-white">
             <div className="flex items-center gap-2 border-b border-border px-5 py-4">
               <MessageSquare size={16} className="text-muted-foreground" />
@@ -81,6 +134,20 @@ export default async function AdminReparationDetailPage({
               </p>
             </div>
           </div>
+
+          {demande.disponibilites && (
+            <div className="overflow-hidden rounded-lg border border-border bg-white">
+              <div className="flex items-center gap-2 border-b border-border px-5 py-4">
+                <CalendarClock size={16} className="text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground">Disponibilités</h2>
+              </div>
+              <div className="px-5 py-5">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                  {demande.disponibilites}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="overflow-hidden rounded-lg border border-border bg-white">
             <div className="flex items-center gap-2 border-b border-border px-5 py-4">
@@ -116,8 +183,8 @@ export default async function AdminReparationDetailPage({
             </div>
             <div className="space-y-3 px-5 py-4 text-sm">
               <div>
-                <p className="mb-0.5 text-xs text-muted-foreground">Nom</p>
-                <p className="font-medium text-foreground">{demande.nom}</p>
+                <p className="mb-0.5 text-xs text-muted-foreground">Nom complet</p>
+                <p className="font-medium text-foreground">{nomComplet}</p>
               </div>
               <div>
                 <p className="mb-0.5 text-xs text-muted-foreground">Téléphone</p>
@@ -128,6 +195,18 @@ export default async function AdminReparationDetailPage({
                   {demande.telephone}
                 </a>
               </div>
+              {demande.email && (
+                <div>
+                  <p className="mb-0.5 text-xs text-muted-foreground">Courriel</p>
+                  <a
+                    href={`mailto:${demande.email}`}
+                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                  >
+                    <Mail size={12} />
+                    {demande.email}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 

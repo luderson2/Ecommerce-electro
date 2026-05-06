@@ -85,7 +85,7 @@ export default function StatutLivraisonForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-primary text-white py-2 rounded-md text-sm font-semibold hover:bg-primary-dark disabled:opacity-60 transition-colors"
+        className="w-full bg-primary text-white py-2 rounded-md text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
       >
         {isPending ? "Enregistrement…" : "Mettre à jour"}
       </button>

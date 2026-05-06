@@ -32,8 +32,8 @@ const ROLES: { value: Role | "tous"; label: string }[] = [
 ];
 
 const BADGE_ROLE: Record<Role, string> = {
-  client: "bg-blue-100 text-blue-700",
-  admin: "bg-purple-100 text-purple-700",
+  client: "bg-neutral-100 text-neutral-800",
+  admin: "bg-burgundy-100 text-burgundy-800",
   employee: "bg-teal-100 text-teal-700",
 };
 

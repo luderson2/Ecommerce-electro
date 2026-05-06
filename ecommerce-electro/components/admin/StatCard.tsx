@@ -17,8 +17,8 @@ const varianteStyles = {
     icon: "bg-primary/10 text-primary",
   },
   warning: {
-    card: "border-orange-200 bg-orange-50/40",
-    icon: "bg-orange-100 text-orange-600",
+    card: "border-burgundy-200 bg-burgundy-50/40",
+    icon: "bg-burgundy-100 text-burgundy-700",
   },
   success: {
     card: "border-green-200 bg-green-50/40",

@@ -1,4 +1,5 @@
 ﻿import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Livraison et retours",
@@ -23,6 +24,13 @@ export default function LivraisonRetoursPage() {
           votre compte.
         </p>
       </div>
+      <p className="mt-8 text-sm text-muted-foreground">
+        Vous avez d&apos;autres questions ? Consultez la{" "}
+        <Link href="/faq" className="font-medium text-primary hover:underline">
+          foire aux questions
+        </Link>
+        .
+      </p>
     </div>
   );
 }

@@ -17,6 +17,9 @@ interface FiltresActifs {
   prix_min?: string;
   prix_max?: string;
   en_stock: boolean;
+  washer_type?: "reguliere" | "frontale";
+  stove_type?: "ceramique" | "serpentin";
+  finish?: "stainless" | "blanc" | "noir";
 }
 
 interface Props {
@@ -31,7 +34,10 @@ export default function FiltresMobile({ categories, marques, filtresActifs }: Pr
     filtresActifs.marque ||
     filtresActifs.prix_min ||
     filtresActifs.prix_max ||
-    filtresActifs.en_stock
+    filtresActifs.en_stock ||
+    filtresActifs.washer_type ||
+    filtresActifs.stove_type ||
+    filtresActifs.finish
   );
 
   return (

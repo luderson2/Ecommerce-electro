@@ -17,6 +17,9 @@ type ProduitInitial = {
   brand: string;
   stock: number;
   is_active: boolean;
+  washer_type?: "reguliere" | "frontale" | null;
+  stove_type?: "ceramique" | "serpentin" | null;
+  finish?: "stainless" | "blanc" | "noir" | null;
 };
 
 interface Props {
@@ -242,6 +245,60 @@ export default function ProduitForm({ produit, productId }: Props) {
         />
       </div>
 
+      {/* â”€â”€ Attributs filtrables â”€â”€ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label htmlFor="finish" className="block text-sm font-medium text-foreground mb-1.5">
+            Finition
+          </label>
+          <select
+            id="finish"
+            name="finish"
+            defaultValue={produit?.finish ?? ""}
+            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+          >
+            <option value="">— Non précisé —</option>
+            <option value="stainless">Stainless</option>
+            <option value="blanc">Blanc</option>
+            <option value="noir">Noir</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="washer_type" className="block text-sm font-medium text-foreground mb-1.5">
+            Type de chargement
+            <span className="text-muted-foreground text-xs font-normal ml-1">(laveuses)</span>
+          </label>
+          <select
+            id="washer_type"
+            name="washer_type"
+            defaultValue={produit?.washer_type ?? ""}
+            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+          >
+            <option value="">— Non précisé —</option>
+            <option value="reguliere">Régulière</option>
+            <option value="frontale">Frontale</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="stove_type" className="block text-sm font-medium text-foreground mb-1.5">
+            Type de plaque
+            <span className="text-muted-foreground text-xs font-normal ml-1">(cuisinières)</span>
+          </label>
+          <select
+            id="stove_type"
+            name="stove_type"
+            defaultValue={produit?.stove_type ?? ""}
+            className="w-full px-3 py-2 border border-border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+          >
+            <option value="">— Non précisé —</option>
+            <option value="ceramique">Céramique</option>
+            <option value="serpentin">Serpentin</option>
+          </select>
+        </div>
+      </div>
+
       {/* â”€â”€ Toggle actif â”€â”€ */}
       <input type="hidden" name="is_active" value={isActive ? "true" : "false"} />
       <div className="flex items-center justify-between p-4 bg-surface rounded-lg border border-border">
@@ -355,7 +412,7 @@ export default function ProduitForm({ produit, productId }: Props) {
         <button
           type="submit"
           disabled={isPending || isUploading}
-          className="bg-primary text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
+          className="bg-primary text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
         >
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           {isPending

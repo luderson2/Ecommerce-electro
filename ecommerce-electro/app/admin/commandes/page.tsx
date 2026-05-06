@@ -137,7 +137,7 @@ export default async function AdminCommandesPage({
                 const urgent = commande.status === "en_attente" && joursAttente >= 2;
 
                 return (
-                  <tr key={commande.id} className={`hover:bg-surface/60 transition-colors ${urgent ? "bg-orange-50/60" : ""}`}>
+                  <tr key={commande.id} className={`hover:bg-surface/60 transition-colors ${urgent ? "bg-burgundy-50/60" : ""}`}>
                     {/* Miniature */}
                     <td className="p-0 w-16">
                       <Link href={`/admin/commandes/${commande.id}`} className="flex items-center justify-center px-3 py-2 h-full">
@@ -177,9 +177,9 @@ export default async function AdminCommandesPage({
                     {/* Date */}
                     <td className="p-0">
                       <Link href={`/admin/commandes/${commande.id}`} className="flex items-center gap-1.5 px-4 py-3 text-muted-foreground">
-                        {urgent && <AlertCircle size={13} className="text-orange-500 shrink-0" />}
-                        <span className={urgent ? "text-orange-700 font-medium" : ""}>{formatDate(commande.created_at)}</span>
-                        {urgent && <span className="text-xs text-orange-500">({joursAttente}j)</span>}
+                        {urgent && <AlertCircle size={13} className="text-burgundy-700 shrink-0" />}
+                        <span className={urgent ? "text-burgundy-800 font-medium" : ""}>{formatDate(commande.created_at)}</span>
+                        {urgent && <span className="text-xs text-burgundy-700">({joursAttente}j)</span>}
                       </Link>
                     </td>
                     {/* Articles */}

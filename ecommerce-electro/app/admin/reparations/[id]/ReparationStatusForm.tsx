@@ -61,7 +61,7 @@ export default function ReparationStatusForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-md bg-primary py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+        className="w-full rounded-md bg-primary py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
       >
         {isPending ? "Enregistrement..." : "Mettre à jour"}
       </button>

@@ -74,7 +74,7 @@ export default function ChartCAMensuel({ donnees }: ChartCAMensuelProps) {
           }
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f4f5f7" }} />
-        <Bar dataKey="ca" fill="#1a2e5a" radius={[4, 4, 0, 0]} maxBarSize={48} />
+        <Bar dataKey="ca" fill="#800020" radius={[4, 4, 0, 0]} maxBarSize={48} />
       </BarChart>
     </ResponsiveContainer>
   );

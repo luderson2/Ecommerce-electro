@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ReparationForm from "./ReparationForm";
 
 export const metadata: Metadata = {
@@ -30,6 +31,15 @@ export default function ReparationPage() {
       </section>
 
       <section className="border-t border-border bg-white">
+        <div className="container mx-auto px-4 pt-10">
+          <p className="text-center text-sm text-muted-foreground">
+            Vous cherchez une réponse rapide ? Consultez la{" "}
+            <Link href="/faq" className="font-medium text-primary hover:underline">
+              foire aux questions
+            </Link>
+            .
+          </p>
+        </div>
         <div className="container mx-auto grid gap-6 px-4 py-10 md:grid-cols-3">
           <div>
             <h2 className="text-base font-semibold text-foreground">Pourquoi pas de photo ici?</h2>

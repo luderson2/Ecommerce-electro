@@ -20,6 +20,9 @@ export async function creerProduit(
     brand: formData.get("brand") as string,
     stock: parseInt(formData.get("stock") as string, 10),
     is_active: formData.get("is_active") === "true",
+    washer_type: (formData.get("washer_type") as string) || null,
+    stove_type: (formData.get("stove_type") as string) || null,
+    finish: (formData.get("finish") as string) || null,
   };
 
   const parsed = produitSchema.safeParse(raw);
@@ -33,6 +36,9 @@ export async function creerProduit(
     .insert({
       ...parsed.data,
       description: parsed.data.description ?? null,
+      washer_type: parsed.data.washer_type ?? null,
+      stove_type: parsed.data.stove_type ?? null,
+      finish: parsed.data.finish ?? null,
     })
     .select("id")
     .single();
@@ -77,6 +83,9 @@ export async function modifierProduit(
     brand: formData.get("brand") as string,
     stock: parseInt(formData.get("stock") as string, 10),
     is_active: formData.get("is_active") === "true",
+    washer_type: (formData.get("washer_type") as string) || null,
+    stove_type: (formData.get("stove_type") as string) || null,
+    finish: (formData.get("finish") as string) || null,
   };
 
   const parsed = produitSchema.safeParse(raw);
@@ -88,6 +97,9 @@ export async function modifierProduit(
   const { error } = await supabase.from("products").update({
     ...parsed.data,
     description: parsed.data.description ?? null,
+    washer_type: parsed.data.washer_type ?? null,
+    stove_type: parsed.data.stove_type ?? null,
+    finish: parsed.data.finish ?? null,
   }).eq("id", id).select("id").single();
   if (error) return { error: "Mise à jour impossible. Vérifiez vos permissions." };
 

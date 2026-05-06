@@ -61,7 +61,7 @@ export default function PackCard({ nom, description, economie, prix, prixOrigina
           </div>
           <div>
             <p className="text-xs text-gray-500">Prix du pack</p>
-            <p className="text-orange-500 font-bold text-xl">{prix.toLocaleString("fr-CA")} $</p>
+            <p className="text-accent font-bold text-xl">{prix.toLocaleString("fr-CA")} $</p>
           </div>
         </div>
         <Button className="bg-primary hover:bg-primary/90 px-8">

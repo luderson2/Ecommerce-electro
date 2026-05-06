@@ -1,10 +1,15 @@
 import "server-only";
 
 type SmsReparationParams = {
+  prenom: string;
   nom: string;
   telephone: string;
-  appareil: string;
+  email: string;
+  type_appareil: string;
+  marque: string;
+  modele: string;
   description: string;
+  disponibilites?: string;
 };
 
 type TwilioMessageResponse = {
@@ -16,10 +21,15 @@ type TwilioMessageResponse = {
 };
 
 export async function envoyerSmsProprio({
+  prenom,
   nom,
   telephone,
-  appareil,
+  email,
+  type_appareil,
+  marque,
+  modele,
   description,
+  disponibilites,
 }: SmsReparationParams) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -30,11 +40,18 @@ export async function envoyerSmsProprio({
     throw new Error("Configuration Twilio manquante.");
   }
 
-  const body =
-    "Nouvelle demande de reparation\n" +
-    `De: ${nom} (${telephone})\n` +
-    `Appareil: ${appareil}\n` +
-    `Description: ${description.slice(0, 400)}`;
+  const lignes = [
+    "Nouvelle demande de reparation",
+    `De: ${prenom} ${nom}`,
+    `Tel: ${telephone}`,
+    `Email: ${email}`,
+    `Appareil: ${type_appareil} ${marque} ${modele}`,
+    `Probleme: ${description.slice(0, 280)}`,
+  ];
+  if (disponibilites) {
+    lignes.push(`Dispos: ${disponibilites.slice(0, 120)}`);
+  }
+  const body = lignes.join("\n");
 
   const response = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`,

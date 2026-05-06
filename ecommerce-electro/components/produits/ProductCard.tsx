@@ -134,7 +134,7 @@ export default function ProductCard({
             </span>
           )}
           {stockFaible && (
-            <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
+            <span className="bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">
               Stock limité
             </span>
           )}

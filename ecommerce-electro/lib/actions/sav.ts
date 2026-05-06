@@ -75,7 +75,7 @@ export async function changerStatutSAV(
             </blockquote>
             <p>Vous pouvez consulter le détail et suivre l'évolution depuis votre espace client.</p>
             <p>
-              <a href="${lien}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600">
+              <a href="${lien}" style="display:inline-block;background:#800020;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600">
                 Voir ma demande
               </a>
             </p>
@@ -164,7 +164,7 @@ export async function soumettreDemandeSAV(
           </blockquote>
           <p>Notre équipe prendra en charge votre demande dans les plus brefs délais.</p>
           <p>
-            <a href="${lien}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600">
+            <a href="${lien}" style="display:inline-block;background:#800020;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600">
               Suivre ma demande
             </a>
           </p>

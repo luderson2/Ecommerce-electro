@@ -12,8 +12,10 @@ import type { ReparationStatus } from "@/types";
 
 type DemandeReparationLigne = {
   id: string;
+  prenom: string | null;
   nom: string;
   telephone: string;
+  email: string | null;
   appareil: string;
   statut: ReparationStatus;
   created_at: string;
@@ -31,7 +33,7 @@ export default async function AdminReparationsPage({
 
   let query = supabase
     .from("demandes_reparation")
-    .select("id, nom, telephone, appareil, statut, created_at")
+    .select("id, prenom, nom, telephone, email, appareil, statut, created_at")
     .order("created_at", { ascending: false });
 
   if (filtreStatut) {
@@ -123,7 +125,7 @@ export default async function AdminReparationsPage({
                       href={`/admin/reparations/${demande.id}`}
                       className="flex px-5 py-3 font-medium text-foreground hover:text-primary"
                     >
-                      {demande.nom}
+                      {[demande.prenom, demande.nom].filter(Boolean).join(" ")}
                     </Link>
                   </td>
                   <td className="p-0">

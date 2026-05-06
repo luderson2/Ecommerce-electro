@@ -169,7 +169,7 @@ export default async function AdminRabaisPage({
                     {/* Type */}
                     <td className="px-5 py-3">
                       {r.discount_type === "percentage" ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-burgundy-100 text-burgundy-800">
                           Pourcentage
                         </span>
                       ) : (

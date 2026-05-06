@@ -34,7 +34,7 @@ export default async function AdminCategoriesPage() {
         </div>
         <Link
           href="/admin/categories/nouvelle"
-          className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-dark transition-colors"
+          className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           <Plus size={16} />
           Nouvelle catégorie
@@ -103,7 +103,7 @@ export default async function AdminCategoriesPage() {
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                         nbProduits > 0
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-burgundy-100 text-burgundy-800"
                           : "bg-gray-100 text-gray-500"
                       }`}>
                         {nbProduits} produit{nbProduits !== 1 ? "s" : ""}

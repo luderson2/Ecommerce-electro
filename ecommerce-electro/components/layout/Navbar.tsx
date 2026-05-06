@@ -33,6 +33,7 @@ export default function Navbar() {
     { href: "/catalogue", label: "Catalogue" },
     { href: "/packs", label: "Packs" },
     { href: "/comparateur", label: "Comparer" },
+    { href: "/reparation", label: "Réparation" },
   ];
 
   const handleLogout = async () => {
@@ -68,47 +69,46 @@ export default function Navbar() {
     : user?.email?.split("@")[0] || "Utilisateur";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-primary text-white shadow-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        
-       
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-primary font-bold text-sm">
-            EA
-          </div>
-          <span className="font-bold text-xl tracking-tight hidden sm:block">
-            ÉlectroMétropolitain
-          </span>
-        </Link>
+    <header className="sticky top-0 z-50 w-full bg-primary text-white shadow-md">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-primary font-bold text-sm">
+              EA
+            </div>
+            <span className="font-bold text-xl tracking-tight hidden sm:block">
+              ÉlectroMétropolitain
+            </span>
+          </Link>
 
-       
-        <nav className="hidden md:flex items-center gap-6" aria-label="Navigation principale">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-white/80 hover:text-white transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden md:flex items-center gap-5" aria-label="Navigation principale">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-white/80 hover:text-white transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        
-        <form onSubmit={handleSearch} className="hidden lg:flex w-64 items-center gap-2" role="search">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
-            <Input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Rechercher un appareil"
-              aria-label="Rechercher un électroménager"
-              className="h-9 border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/60 focus-visible:ring-white/30"
-            />
-          </div>
-        </form>
+        <div className="flex items-center gap-3">
+          <form onSubmit={handleSearch} className="hidden lg:flex w-56 items-center" role="search">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Rechercher un appareil"
+                aria-label="Rechercher un électroménager"
+                className="h-9 border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/60 focus-visible:ring-white/30"
+              />
+            </div>
+          </form>
 
-        <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
           
           {/* Favoris Button with Counter */}
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" asChild>
@@ -217,6 +217,7 @@ export default function Navbar() {
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
+          </div>
         </div>
       </div>
 
