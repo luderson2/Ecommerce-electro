@@ -45,7 +45,7 @@ export default function ConnexionForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Mot de passe</Label>
-          <Link href="/mot-de-passe-oublie" className="text-xs text-primary hover:underline">
+          <Link href="/connexion/forgot-password" className="text-xs text-primary hover:underline">
             Oublie ?
           </Link>
         </div>
