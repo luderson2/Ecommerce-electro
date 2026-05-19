@@ -1,6 +1,18 @@
 ﻿import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createPublicClient } from "@/lib/supabase/client";
 import { notFound } from "next/navigation";
+
+export const revalidate = 600; // ISR : revalide toutes les 10 min (stock)
+
+export async function generateStaticParams() {
+  const supabase = createPublicClient();
+  const { data } = await supabase
+    .from("products")
+    .select("slug")
+    .eq("is_active", true);
+  return (data ?? []).map((p) => ({ slug: p.slug }));
+}
 import Image from "next/image";
 import Link from "next/link";
 import { Check, X, ArrowLeft, Truck, Shield } from "lucide-react";
@@ -84,22 +96,18 @@ export default async function ProduitDetailPage({
 
   let similaires: ProduitCarte[] = [];
   if (categories.length > 0) {
-    const { data: pcRows } = await supabase
+    // 1 seule requête avec embed !inner (était 2 fetches séquentiels)
+    const { data: linked } = await supabase
       .from("product_categories")
-      .select("product_id")
+      .select("products!inner(id, name, slug, price, brand, stock, product_images(url, sort_order))")
       .eq("category_id", categories[0].id)
       .neq("product_id", produit.id)
+      .eq("products.is_active", true)
       .limit(4);
 
-    if (pcRows && pcRows.length > 0) {
-      const ids = pcRows.map((r) => r.product_id);
-      const { data: sim } = await supabase
-        .from("products")
-        .select("id, name, slug, price, brand, stock, product_images(url, sort_order)")
-        .in("id", ids)
-        .eq("is_active", true);
-      similaires = (sim ?? []) as ProduitCarte[];
-    }
+    similaires = (linked ?? [])
+      .map((r) => (r as { products: ProduitCarte }).products)
+      .filter((p): p is ProduitCarte => p !== null);
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -209,7 +217,7 @@ export default async function ProduitDetailPage({
                   key={i}
                   className="relative h-20 w-20 flex-shrink-0 rounded-md border border-border overflow-hidden bg-surface"
                 >
-                  <Image src={img.url} alt={`${produit.name} vue ${i + 1}`} fill sizes="80px" className="object-contain p-2" />
+                  <Image src={img.url} alt={`${produit.name} vue ${i + 1}`} fill sizes="80px" quality={50} className="object-contain p-2" />
                 </div>
               ))}
             </div>

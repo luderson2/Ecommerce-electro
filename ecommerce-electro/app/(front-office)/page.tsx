@@ -1,4 +1,6 @@
 ﻿import { createClient } from "@/lib/supabase/server";
+
+export const revalidate = 3600; // ISR : revalide toutes les heures
 import Link from "next/link";
 import { ArrowRight, Truck, Shield, Headphones, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
