@@ -4,7 +4,6 @@ import {
   cancelPendingOrderForUser,
   confirmOrderForUser,
   createCheckoutSessionForUser,
-  getCheckoutSessionDetails,
   type DeliveryMode,
 } from '@/lib/payments/checkout'
 
@@ -31,10 +30,6 @@ export async function createCheckoutSession(
   shippingAddress?: ShippingAddress
 ) {
   return createCheckoutSessionForUser(cartItems, deliveryMode, tipAmount, shippingAddress)
-}
-
-export async function getCheckoutSession(sessionId: string) {
-  return getCheckoutSessionDetails(sessionId)
 }
 
 export async function confirmOrder(orderId: string, sessionId: string) {

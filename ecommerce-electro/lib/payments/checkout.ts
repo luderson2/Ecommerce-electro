@@ -106,13 +106,17 @@ export async function createCheckoutSessionForUser(
   const now = new Date().toISOString()
 
   // Fetch all active percentage discounts (product-level and pack-level)
-  const { data: activeDiscounts } = await supabase
+  const { data: activeDiscounts, error: discountsError } = await supabase
     .from('discounts')
     .select('product_id, pack_id, discount_type, value')
     .eq('is_active', true)
     .eq('discount_type', 'percentage')
     .or(`starts_at.is.null,starts_at.lte.${now}`)
     .or(`ends_at.is.null,ends_at.gte.${now}`)
+
+  if (discountsError) {
+    throw new Error('Erreur lors de la recuperation des remises')
+  }
 
   const productDiscountMap: Record<string, number> = {}
   const tablePackDiscountMap: Record<string, number> = {}
@@ -124,15 +128,22 @@ export async function createCheckoutSessionForUser(
   // Compute pack-level effective prices (applies when ALL products of a pack are in the cart)
   const packEffectivePrices: Record<string, number> = {}
 
-  const { data: packMemberships } = await supabase
+  const { data: packMemberships, error: packMembershipsError } = await supabase
     .from('pack_products')
     .select('pack_id, product_id')
     .in('product_id', productIds)
 
+  if (packMembershipsError) {
+    throw new Error('Erreur lors de la recuperation des packs')
+  }
+
   if (packMemberships && packMemberships.length > 0) {
     const uniquePackIds = [...new Set(packMemberships.map((m) => m.pack_id))]
 
-    const [{ data: allPackMembers }, { data: packPrices }] = await Promise.all([
+    const [
+      { data: allPackMembers, error: allPackMembersError },
+      { data: packPrices, error: packPricesError },
+    ] = await Promise.all([
       supabase
         .from('pack_products')
         .select('pack_id, product_id')
@@ -143,6 +154,10 @@ export async function createCheckoutSessionForUser(
         .in('id', uniquePackIds)
         .eq('is_active', true),
     ])
+
+    if (allPackMembersError || packPricesError) {
+      throw new Error('Erreur lors de la recuperation des prix de packs')
+    }
 
     const fullPackMembers: Record<string, string[]> = {}
     for (const m of allPackMembers ?? []) {
