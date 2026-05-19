@@ -9,14 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { useAuth } from '@/contexts/auth-context'
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
   const orderId = searchParams.get('order_id')
+  const { user } = useAuth()
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [customerEmail, setCustomerEmail] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   // Stocker la clé session:order confirmée pour éviter les doubles appels
@@ -70,15 +71,13 @@ function CheckoutSuccessContent() {
        
         const session = await getJson<{
           status: string | null
-          customerEmail: string | null
           paymentStatus: string | null
         }>(`/api/checkout/session-status?session_id=${encodeURIComponent(sessionId)}`)
 
-        
+
         if (session.paymentStatus === 'paid' || session.status === 'complete') {
           await postJson('/api/checkout/confirm', { orderId, sessionId })
-          
-          setCustomerEmail(session.customerEmail || null)
+
           setStatus('success')
         } else {
           setStatus('error')
@@ -126,10 +125,10 @@ function CheckoutSuccessContent() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6 text-sm">
-                {customerEmail && (
+                {user?.email && (
                   <div className="p-4 bg-secondary/30 rounded-lg">
                     <p className="text-muted-foreground italic text-xs uppercase font-bold mb-1">Envoyé à</p>
-                    <p className="font-semibold">{customerEmail}</p>
+                    <p className="font-semibold">{user.email}</p>
                   </div>
                 )}
 

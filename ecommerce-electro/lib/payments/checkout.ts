@@ -346,7 +346,6 @@ export async function getCheckoutSessionDetails(sessionId: string) {
   const session = await stripe.checkout.sessions.retrieve(sessionId)
   return {
     status: session.status,
-    customerEmail: session.customer_details?.email,
     paymentStatus: session.payment_status,
   }
 }
@@ -359,6 +358,20 @@ export async function confirmOrderForUser(orderId: string, sessionId: string) {
     throw new Error('Vous devez etre connecte')
   }
 
+  // Vérifier l'ownership de la commande ET le lien avec la session AVANT tout
+  // appel Stripe (évite de sonder l'existence/état d'un sessionId arbitraire)
+  const { data: ownedOrder, error: ownershipError } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('id', orderId)
+    .eq('user_id', user.id)
+    .eq('stripe_session_id', sessionId)
+    .single()
+
+  if (ownershipError || !ownedOrder) {
+    throw new Error('Commande introuvable')
+  }
+
   const session = await stripe.checkout.sessions.retrieve(sessionId)
   if (session.payment_status !== 'paid') {
     throw new Error("Le paiement n'a pas ete complete")
@@ -366,7 +379,7 @@ export async function confirmOrderForUser(orderId: string, sessionId: string) {
 
   await confirmerCommandePayeeDepuisSession(session, orderId, user.id)
 
-  // Verify order ownership after confirmation
+  // Re-vérifier l'ownership après confirmation (défense en profondeur)
   const { error: verifyError } = await supabase
     .from('orders')
     .select('id')
