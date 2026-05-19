@@ -72,7 +72,7 @@ export default async function HomePage() {
                 Découvrez notre sélection d&apos;électroménagers de marques reconnues. Livraison gratuite sur les commandes de 500 $ et plus.
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-white border-0" asChild>
+                <Button size="lg" className="bg-white hover:bg-white/90 text-primary border-0" asChild>
                   <Link href="/catalogue">
                     Magasiner <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>

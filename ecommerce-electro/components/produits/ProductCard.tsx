@@ -39,6 +39,7 @@ export default function ProductCard({
   const [cartError, setCartError] = useState<string | null>(null);
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const [wishlistError, setWishlistError] = useState<string | null>(null);
+  const [imageErreur, setImageErreur] = useState(false);
 
   const imageUrl = produit.product_images
     ?.slice()
@@ -109,7 +110,7 @@ export default function ProductCard({
      
       <div className="relative aspect-square bg-surface overflow-hidden">
         <Link href={`/catalogue/${produit.slug}`} className="relative block h-full w-full" tabIndex={-1}>
-          {imageUrl ? (
+          {imageUrl && !imageErreur ? (
             <Image
               src={imageUrl}
               alt={produit.name}
@@ -117,12 +118,16 @@ export default function ProductCard({
               className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               unoptimized={imageUrl.includes("placehold.co")}
+              onError={() => setImageErreur(true)}
             />
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-              <span className="text-4xl mb-1">📦</span>
-              <span className="text-xs">Pas d&apos;image</span>
-            </div>
+            <Image
+              src="/placeholder.svg"
+              alt={produit.name}
+              fill
+              className="object-contain p-6"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
           )}
         </Link>
 

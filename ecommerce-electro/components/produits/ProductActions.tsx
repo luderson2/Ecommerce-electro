@@ -46,7 +46,7 @@ export default function ProductActions({ product, disabled = false }: ProductAct
   return (
     <div className="space-y-2">
       <Button
-        className="w-full bg-accent hover:bg-accent/90 text-white"
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
         size="lg"
         disabled={disabled || isAdding}
         onClick={handleAddToCart}

@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatPrix } from "@/lib/utils";
 import ProductCard, { type ProduitCarte } from "@/components/produits/ProductCard";
 import ProductActions from "@/components/produits/ProductActions";
+import ProductImage from "@/components/produits/ProductImage";
 
 type ProductCategory = { id: string; name: string; slug: string };
 
@@ -192,21 +193,11 @@ export default async function ProduitDetailPage({
       <div className="grid lg:grid-cols-2 gap-10 mb-16">
         <div className="space-y-3">
           <div className="relative aspect-square bg-surface rounded-lg border border-border overflow-hidden">
-            {images[0] ? (
-              <Image
-                src={images[0].url}
-                alt={produit.name}
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-contain p-8"
-                priority
-              />
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-                <span className="text-sm font-semibold">ÉlectroMétropolitain</span>
-                <span className="text-sm">Pas d&apos;image</span>
-              </div>
-            )}
+            <ProductImage
+              src={images[0]?.url ?? '/placeholder.svg'}
+              alt={produit.name}
+              priority
+            />
             {epuise && (
               <Badge className="absolute top-4 left-4 bg-red-600 text-white">Épuisé</Badge>
             )}
