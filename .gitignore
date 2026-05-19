@@ -138,8 +138,11 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Claude Code
-.claude/
+# Claude Code — ignore tout sauf la config partagée équipe
+**/.claude/*
+!**/.claude/settings.json
+!**/.claude/agents/
+# settings.local.json reste ignoré (contenait une clé service_role — local only)
 
 # Docs de démarrage
 DEMARRAGE.md

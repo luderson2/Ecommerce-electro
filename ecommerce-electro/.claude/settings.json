@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit *)",
+      "Bash(npx eslint app/ lib/ components/ types/ --ext .ts,.tsx *)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_migrations"
+    ]
+  },
+  "enabledPlugins": {
+    "claude-code-setup@claude-plugins-official": true
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "timeout": 240,
+            "statusMessage": "Pre-delivery gate: npm run lint + npx tsc --noEmit",
+            "command": "$l = npm run lint 2>&1 | Out-String; $lc = $LASTEXITCODE; $t = npx tsc --noEmit 2>&1 | Out-String; $tc = $LASTEXITCODE; if ($lc -ne 0 -or $tc -ne 0) { $m = \"Pre-delivery quality gate failed (CLAUDE.md). Fix these before finishing.`n`n=== npm run lint (exit $lc) ===`n$l`n=== npx tsc --noEmit (exit $tc) ===`n$t\"; ConvertTo-Json -Compress -InputObject @{ decision = 'block'; reason = $m } }"
+          }
+        ]
+      }
+    ]
+  }
+}
