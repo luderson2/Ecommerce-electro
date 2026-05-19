@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Check, X, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPrix } from "@/lib/utils";
@@ -157,7 +156,7 @@ export default async function ProduitDetailPage({
     JSON.stringify(data).replace(/</g, "\\u003c");
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(productJsonLd) }}
@@ -190,7 +189,7 @@ export default async function ProduitDetailPage({
         </ol>
       </nav>
 
-      <div className="grid lg:grid-cols-2 gap-10 mb-16">
+      <div className="grid lg:grid-cols-2 gap-10 mb-10">
         <div className="space-y-3">
           <div className="relative aspect-square bg-surface rounded-lg border border-border overflow-hidden">
             <ProductImage
@@ -217,7 +216,7 @@ export default async function ProduitDetailPage({
           )}
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">
               {produit.brand}
@@ -266,6 +265,19 @@ export default async function ProduitDetailPage({
 
           <Separator />
 
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <dt className="text-muted-foreground">Marque</dt>
+            <dd className="font-medium text-foreground">{produit.brand}</dd>
+            <dt className="text-muted-foreground">Référence</dt>
+            <dd className="font-mono text-xs text-muted-foreground pt-0.5">#{produit.id.slice(0, 8).toUpperCase()}</dd>
+            <dt className="text-muted-foreground">Disponibilité</dt>
+            <dd className={epuise ? "text-destructive font-medium" : "text-green-600 font-medium"}>
+              {epuise ? "Épuisé" : `En stock${produit.stock <= 5 ? ` (${produit.stock} restant${produit.stock > 1 ? "s" : ""})` : ""}`}
+            </dd>
+          </dl>
+
+          <Separator />
+
           <div className="space-y-3">
             <ProductActions
               product={{
@@ -276,12 +288,13 @@ export default async function ProduitDetailPage({
               }}
               disabled={epuise}
             />
-            <Button variant="outline" className="w-full" size="lg" asChild>
-              <Link href="/catalogue">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour au catalogue
-              </Link>
-            </Button>
+            <Link
+              href="/catalogue"
+              className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Retour au catalogue
+            </Link>
           </div>
         </div>
       </div>
