@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Check, X, ArrowLeft } from "lucide-react";
+import { Check, X, ArrowLeft, Truck, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPrix } from "@/lib/utils";
@@ -217,8 +217,9 @@ export default async function ProduitDetailPage({
         </div>
 
         <div className="space-y-4">
+          {/* Marque + titre */}
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
               {produit.brand}
             </p>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">{produit.name}</h1>
@@ -238,47 +239,49 @@ export default async function ProduitDetailPage({
 
           <Separator />
 
-          <p className="text-3xl font-bold text-accent">{formatPrix(produit.price)}</p>
-
-          <div className="flex items-center gap-2">
-            {!epuise ? (
-              <>
-                <Check className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-600 font-medium">
-                  En stock{produit.stock <= 5 ? ` - ${produit.stock} restant${produit.stock > 1 ? "s" : ""}` : ""}
-                </span>
-              </>
-            ) : (
-              <>
-                <X className="h-4 w-4 text-destructive" />
-                <span className="text-sm text-destructive font-medium">Rupture de stock</span>
-              </>
-            )}
+          {/* Prix + pill stock sur la même ligne */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <p className="text-3xl font-bold text-accent">{formatPrix(produit.price)}</p>
+            <span
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                epuise
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-green-50 text-green-700 border-green-200"
+              }`}
+            >
+              {!epuise ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+              {epuise
+                ? "Épuisé"
+                : produit.stock <= 5
+                ? `${produit.stock} restant${produit.stock > 1 ? "s" : ""}`
+                : "En stock"}
+            </span>
           </div>
 
           {produit.description && (
-            <>
-              <Separator />
-              <p className="text-muted-foreground leading-relaxed">{produit.description}</p>
-            </>
+            <p className="text-sm text-muted-foreground leading-relaxed">{produit.description}</p>
           )}
 
-          <Separator />
+          {/* Carte specs */}
+          <div className="rounded-md border border-border bg-surface/60 px-4 py-3">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+              <dt className="text-muted-foreground">Marque</dt>
+              <dd className="font-medium text-foreground">{produit.brand}</dd>
+              {categories[0] && (
+                <>
+                  <dt className="text-muted-foreground">Catégorie</dt>
+                  <dd className="font-medium text-foreground">{categories[0].name}</dd>
+                </>
+              )}
+              <dt className="text-muted-foreground">Référence</dt>
+              <dd className="font-mono text-xs text-muted-foreground pt-0.5">
+                #{produit.id.slice(0, 8).toUpperCase()}
+              </dd>
+            </dl>
+          </div>
 
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <dt className="text-muted-foreground">Marque</dt>
-            <dd className="font-medium text-foreground">{produit.brand}</dd>
-            <dt className="text-muted-foreground">Référence</dt>
-            <dd className="font-mono text-xs text-muted-foreground pt-0.5">#{produit.id.slice(0, 8).toUpperCase()}</dd>
-            <dt className="text-muted-foreground">Disponibilité</dt>
-            <dd className={epuise ? "text-destructive font-medium" : "text-green-600 font-medium"}>
-              {epuise ? "Épuisé" : `En stock${produit.stock <= 5 ? ` (${produit.stock} restant${produit.stock > 1 ? "s" : ""})` : ""}`}
-            </dd>
-          </dl>
-
-          <Separator />
-
-          <div className="space-y-3">
+          {/* Bloc achat */}
+          <div className="space-y-2.5 pt-1">
             <ProductActions
               product={{
                 id: produit.id,
@@ -288,6 +291,16 @@ export default async function ProduitDetailPage({
               }}
               disabled={epuise}
             />
+            <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground py-0.5">
+              <span className="flex items-center gap-1">
+                <Truck className="h-3 w-3 shrink-0" />
+                Livraison gratuite dès 500 $
+              </span>
+              <span className="flex items-center gap-1">
+                <Shield className="h-3 w-3 shrink-0" />
+                Garantie 2 ans
+              </span>
+            </div>
             <Link
               href="/catalogue"
               className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
