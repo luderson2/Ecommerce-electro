@@ -1,5 +1,4 @@
 ﻿import { createClient } from "@/lib/supabase/server";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Truck, Shield, Headphones, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -61,35 +60,66 @@ export default async function HomePage() {
       />
       {/* Hero */}
       <section className="bg-primary text-white">
-        <div className="container mx-auto px-4 py-14 md:py-20">
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div>
-              <Badge className="mb-4 bg-accent text-white border-0">Nouveautés</Badge>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-balance leading-tight">
-                Des appareils de qualité pour votre maison
+        <div className="container mx-auto px-4 py-16 md:py-24">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-14">
+
+            {/* Bloc texte */}
+            <div className="lg:max-w-[620px]">
+              {/* Eyebrow géographique */}
+              <div className="flex items-center gap-3 mb-9">
+                <span className="h-px w-8 bg-white/20 shrink-0" />
+                <span className="text-[10px] tracking-[0.25em] uppercase font-semibold text-white/40">
+                  Montréal · Québec
+                </span>
+              </div>
+
+              {/* Headline à contraste de graisse */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.06] tracking-tight mb-7">
+                Des électroménagers<br />
+                <span className="font-light text-white/40">de qualité,</span><br />
+                livrés chez vous.
               </h1>
-              <p className="text-white/80 text-lg mb-8 max-w-md leading-relaxed">
-                Découvrez notre sélection d&apos;électroménagers de marques reconnues. Livraison gratuite sur les commandes de 500 $ et plus.
+
+              <p className="text-white/60 text-base leading-relaxed mb-9 max-w-md">
+                Sélection de marques reconnues, disponibles au Québec.
+                Livraison gratuite sur les commandes de 500&nbsp;$ et plus.
               </p>
-              <div className="flex flex-wrap gap-3">
-                <Button size="lg" className="bg-white hover:bg-white/90 text-primary border-0" asChild>
+
+              {/* CTAs : bouton blanc + lien texte */}
+              <div className="flex flex-wrap items-center gap-5">
+                <Button
+                  size="lg"
+                  className="bg-white hover:bg-white/90 text-primary border-0 font-semibold"
+                  asChild
+                >
                   <Link href="/catalogue">
                     Magasiner <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="bg-transparent border-white/40 text-white hover:bg-white/10 hover:text-white" asChild>
-                  <Link href="/packs">Voir les packs</Link>
-                </Button>
+                <Link
+                  href="/packs"
+                  className="text-sm text-white/50 hover:text-white underline-offset-4 hover:underline transition-colors"
+                >
+                  Voir les offres en ensemble
+                </Link>
               </div>
             </div>
-            <div className="relative aspect-square md:aspect-[4/3] bg-white/10 rounded-xl overflow-hidden hidden md:block">
-              <Image
-                src="/placeholder.svg"
-                alt="Électroménagers ElectroMétropolitain"
-                fill
-                className="object-contain p-10 opacity-80"
-              />
+
+            {/* Grille stats 2×2 — desktop uniquement */}
+            <div className="hidden lg:grid grid-cols-2 gap-px bg-white/10 rounded-2xl overflow-hidden shrink-0">
+              {[
+                { value: "13+", label: "produits disponibles" },
+                { value: "500 $", label: "livraison offerte dès" },
+                { value: "2 ans", label: "garantie incluse" },
+                { value: "7j/7", label: "support dédié" },
+              ].map(({ value, label }) => (
+                <div key={label} className="bg-primary px-6 py-5">
+                  <p className="text-2xl font-bold">{value}</p>
+                  <p className="text-[11px] text-white/40 mt-1 leading-tight">{label}</p>
+                </div>
+              ))}
             </div>
+
           </div>
         </div>
       </section>
