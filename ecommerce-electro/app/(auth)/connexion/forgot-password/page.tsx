@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
       } else {
         setSent(true)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
       setIsLoading(false)
       setError('Une erreur est survenue. Veuillez réessayer.')
