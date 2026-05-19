@@ -1,7 +1,6 @@
 ﻿"use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"; // AJOUTÉ POUR L'ADMIN
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { connexionSchema, inscriptionSchema } from "@/lib/validations/auth";
@@ -12,31 +11,6 @@ const DESTINATIONS: Record<string, string> = {
   client: "/",
 };
 
-
-export async function verifyIfEmailExists(email: string): Promise<boolean> {
-  try {
-    // Création d'un client admin temporaire avec la clé secrète service_role
-    const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY! 
-    );
-
-    // Récupère la liste de tous les utilisateurs inscrits sur l'application
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (error) throw error;
-
-    
-    const userExists = data.users.some(
-      (user) => user.email?.toLowerCase() === email.trim().toLowerCase()
-    );
-
-    return userExists;
-  } catch (error) {
-    console.error("Erreur lors de la vérification de l'e-mail:", error);
-    return false; // Renvoie false en cas de plantage pour bloquer l'envoi
-  }
-}
 
 export async function seConnecter(
   _prevState: { error?: string } | null,

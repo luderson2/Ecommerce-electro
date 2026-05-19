@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
-import { verifyIfEmailExists } from "@/lib/actions/auth" 
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -22,31 +21,21 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      const emailExists = await verifyIfEmailExists(email)
-
-      if (!emailExists) {
-        setIsLoading(false)
-        setError('Aucun compte associé à cette adresse courriel.')
-        return
-      }
-
-    
       const supabase = createClient()
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/connexion/reset-password`,
       })
 
-      setIsLoading(false)
-
+      // Ne jamais révéler si le compte existe : on logue l'erreur éventuelle
+      // mais on affiche toujours la même confirmation neutre.
       if (resetError) {
-        setError('Une erreur est survenue lors de l\'envoi. Veuillez réessayer.')
-      } else {
-        setSent(true)
+        console.error(resetError)
       }
     } catch (err: unknown) {
       console.error(err)
+    } finally {
       setIsLoading(false)
-      setError('Une erreur est survenue. Veuillez réessayer.')
+      setSent(true)
     }
   }
 
@@ -86,10 +75,11 @@ export default function ForgotPasswordPage() {
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
                   <div>
-                    <p className="font-medium">Courriel envoyé!</p>
+                    <p className="font-medium">Vérifiez votre courriel</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Un lien de réinitialisation a été envoyé à{' '}
-                      <span className="font-medium text-foreground">{email}</span>.
+                      Si un compte est associé à{' '}
+                      <span className="font-medium text-foreground">{email}</span>,
+                      un lien de réinitialisation vient d&apos;être envoyé.
                       Vérifiez aussi votre dossier de courrier indésirable.
                     </p>
                   </div>
